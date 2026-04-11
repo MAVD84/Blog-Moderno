@@ -5,10 +5,12 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "clave_super_secreta_cambiala"
+# RECOMENDACIÓN: En Coolify, usa una variable de entorno para la clave secreta
+app.secret_key = os.getenv("SECRET_KEY", "clave_super_secreta_cambiala")
 
-# --- RUTAS A PRUEBA DE BALAS ---
+# --- RUTAS DE ARCHIVOS ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+# Aseguramos que las subidas y la DB estén en una carpeta persistente si la configuras
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static/uploads')
 DB_NAME = "blog.db"
 
@@ -19,8 +21,8 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 # --- CONFIGURACIÓN DE USUARIO ---
-ADMIN_USER = "admin"
-ADMIN_PASS = "K3y1907$$"
+ADMIN_USER = os.getenv("ADMIN_USER", "admin")
+ADMIN_PASS = os.getenv("ADMIN_PASS", "K3y1907$$")
 
 # --- Ayudantes ---
 def allowed_file(filename):
@@ -50,6 +52,7 @@ def init_db():
         ''')
         conn.commit()
 
+# Inicializar DB al arrancar
 init_db()
 
 # --- Rutas Públicas ---
@@ -72,6 +75,8 @@ def post(id):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM posts WHERE id = ?", (id,))
         post = cursor.fetchone()
+    if post is None:
+        return "Post no encontrado", 404
     return render_template('post.html', post=post)
 
 # --- Rutas de Administración ---
@@ -79,8 +84,8 @@ def post(id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = request.form['username']
-        password = request.form['password']
+        user = request.form.get('username')
+        password = request.form.get('password')
         if user == ADMIN_USER and password == ADMIN_PASS:
             session['logged_in'] = True
             return redirect(url_for('dashboard'))
@@ -97,8 +102,8 @@ def logout():
 @login_required
 def dashboard():
     if request.method == 'POST':
-        titulo = request.form['titulo']
-        contenido = request.form['contenido']
+        titulo = request.form.get('titulo')
+        contenido = request.form.get('contenido')
 
         imagen_nombre = None
         if 'imagen' in request.files:
@@ -119,26 +124,22 @@ def dashboard():
 
     return render_template('dashboard.html')
 
-# --- NUEVA FUNCIÓN: EDITAR ---
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar(id):
     db_path = os.path.join(BASE_DIR, DB_NAME)
 
-    # 1. Recuperar el post original
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM posts WHERE id = ?", (id,))
         post = cursor.fetchone()
 
-    # 2. Guardar cambios
     if request.method == 'POST':
-        titulo = request.form['titulo']
-        contenido = request.form['contenido']
-        imagen_nombre = post['imagen'] # Por defecto dejamos la imagen vieja
+        titulo = request.form.get('titulo')
+        contenido = request.form.get('contenido')
+        imagen_nombre = post['imagen']
 
-        # Si el usuario sube una imagen NUEVA, la reemplazamos
         if 'imagen' in request.files:
             file = request.files['imagen']
             if file and allowed_file(file.filename):
@@ -168,3 +169,8 @@ def borrar(id):
         cursor.execute("DELETE FROM posts WHERE id = ?", (id,))
         conn.commit()
     return redirect(url_for('index'))
+
+if __name__ == "__main__":
+    # Importante para Coolify: host 0.0.0.0
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
