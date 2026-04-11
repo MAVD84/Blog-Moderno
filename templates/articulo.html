@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <article class="bg-white p-8 rounded-lg shadow-lg">
+        <header class="mb-6 border-b pb-4">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">{{ post.titulo }}</h1>
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span>📅 Publicado el {{ post.fecha[:16] }}</span>
+                <a href="/borrar/{{ post.id }}" class="text-red-400 hover:text-red-600 font-bold" onclick="return confirm('¿Eliminar este post?')">🗑 Borrar</a>
+            </div>
+        </header>
+
+        <div class="prose lg:prose-xl max-w-none text-gray-800">
+            {{ post.contenido.replace('\n', '<br>') | safe }}
+        </div>
+
+        <div class="mt-8 pt-6 border-t">
+            <a href="/" class="text-indigo-600 hover:underline">← Volver al inicio</a>
+        </div>
+    </article>
+{% endblock %}
