@@ -131,7 +131,7 @@ function render_editor(string $content = ''): void
             <div class="editor-group"><button type="button" data-link>🔗 Enlace</button><button type="button" data-command="removeFormat">Limpiar</button></div>
         </div>
         <div id="rich-editor" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribe aquí el contenido de tu publicación..."><?= sanitize_html($content) ?></div>
-        <textarea class="editor-value" name="contenido" hidden required><?= e($content) ?></textarea>
+        <textarea class="editor-value" name="contenido" hidden><?= e($content) ?></textarea>
         <div class="editor-status"><span>Formato seguro activado</span><span class="editor-count">0 palabras</span></div>
     </div>
     <script src="assets/editor.js?v=<?= e($editorVersion) ?>" defer></script>
