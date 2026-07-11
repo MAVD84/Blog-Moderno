@@ -12,6 +12,8 @@ Cada artículo ofrece el menú nativo para compartir en celulares y copia el enl
 
 ## Instalación
 
+En una instalación nueva abre `/install.php` y sigue el asistente. Este comprueba PHP, crea las tablas, genera `.env`, guarda la contraseña administrativa como hash y se bloquea al terminar.
+
 1. Crea una base MySQL y ejecuta `schema.sql`.
 2. Configura las variables del servidor:
 
@@ -38,6 +40,7 @@ php -r "echo password_hash('cambia-esta-clave', PASSWORD_DEFAULT), PHP_EOL;"
 
 En una instalación existente ejecuta también `migrations/002_login_security.sql`. Esta migración activa el registro y bloqueo progresivo de intentos. Las sesiones administrativas expiran después de 30 minutos de inactividad.
 Después ejecuta `migrations/003_pretty_urls.sql` para activar URLs como `/polygon-blockchain`. Apache debe permitir reglas `.htaccess` (`AllowOverride FileInfo` o `AllowOverride All`).
+Ejecuta `migrations/004_site_settings.sql` para habilitar la personalización desde `settings.php`.
 
 3. Concede permiso de escritura al usuario del servidor web sobre `uploads/`.
 4. Configura el document root apuntando a este directorio.

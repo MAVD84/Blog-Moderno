@@ -35,6 +35,39 @@ function absolute_url(string $path): string
     return site_base_url() . '/' . ltrim($path, '/');
 }
 
+function site_settings(): array
+{
+    static $settings = null;
+    if (is_array($settings)) { return $settings; }
+    $settings = [
+        'site_name' => 'Blog.',
+        'site_title' => 'Polygon Blockchain',
+        'site_tagline' => 'Documentando el camino',
+        'site_description' => 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.',
+        'footer_text' => 'Blog Personal.',
+        'og_image' => '/assets/og-image.png',
+    ];
+    try {
+        foreach (db()->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll() as $row) {
+            if (array_key_exists($row['setting_key'], $settings)) { $settings[$row['setting_key']] = $row['setting_value']; }
+        }
+    } catch (PDOException $error) {
+        if (!str_contains($error->getMessage(), 'site_settings')) { throw $error; }
+    }
+    return $settings;
+}
+
+function site_setting(string $key): string { return site_settings()[$key] ?? ''; }
+
+function save_site_settings(array $values): void
+{
+    $stmt = db()->prepare(
+        'INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
+    );
+    foreach ($values as $key => $value) { $stmt->execute([$key, $value]); }
+}
+
 function slugify(string $title): string
 {
     $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title) ?: $title;
@@ -244,14 +277,17 @@ function render_header(string $title, array $metadata = []): void
     $messages = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
     $styleVersion = (string) (@filemtime(__DIR__ . '/assets/style.css') ?: '1');
-    $siteName = 'Polygon Blockchain';
-    $pageTitle = $metadata['title'] ?? ($title === 'Inicio' ? $siteName . ' · Blog' : $title . ' · ' . $siteName);
-    $description = $metadata['description'] ?? 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.';
+    $siteName = site_setting('site_name');
+    $pageTitle = $metadata['title'] ?? ($title === 'Inicio' ? site_setting('site_title') . ' · ' . $siteName : $title . ' · ' . $siteName);
+    $description = $metadata['description'] ?? site_setting('site_description');
     $canonical = absolute_url($metadata['canonical'] ?? (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'));
-    $socialImage = absolute_url($metadata['image'] ?? '/assets/og-image.png');
+    $socialImagePath = $metadata['image'] ?? site_setting('og_image');
+    $socialImage = absolute_url($socialImagePath);
     $type = $metadata['type'] ?? 'website';
-    $imageWidth = (int)($metadata['image_width'] ?? 1320);
-    $imageHeight = (int)($metadata['image_height'] ?? 682);
+    $localImage = __DIR__ . '/' . ltrim((string)(parse_url($socialImagePath, PHP_URL_PATH) ?: ''), '/');
+    $detectedSize = is_file($localImage) ? @getimagesize($localImage) : false;
+    $imageWidth = (int)($metadata['image_width'] ?? ($detectedSize[0] ?? 1320));
+    $imageHeight = (int)($metadata['image_height'] ?? ($detectedSize[1] ?? 682));
     ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e($pageTitle) ?></title>
@@ -276,12 +312,12 @@ function render_header(string $title, array $metadata = []): void
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
 <?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => 'Miguel Vega'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url('/assets/favicon.png')]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
 <link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
-<nav><a class="brand" href="index.php">Blog.</a><div><?php if (is_admin()): ?>
-<a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a><a href="security.php">Seguridad</a>
+<nav><a class="brand" href="index.php"><?= e(site_setting('site_name')) ?></a><div><?php if (is_admin()): ?>
+<a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a><a href="security.php">Seguridad</a><a href="settings.php">Configuración</a>
 <form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form>
 <?php endif; ?></div></nav>
 <main><?php foreach ($messages as [$type, $message]): ?><div class="flash <?= e($type) ?>"><?= e($message) ?></div><?php endforeach; ?>
 <?php
 }
 
-function render_footer(): void { ?></main><footer>&copy; <?= date('Y') ?> Blog Personal.</footer></body></html><?php }
+function render_footer(): void { ?></main><footer>&copy; <?= date('Y') ?> <?= e(site_setting('footer_text')) ?></footer></body></html><?php }

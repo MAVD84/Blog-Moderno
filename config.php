@@ -24,6 +24,7 @@ function load_env_file(string $path): void
             $last = $value[strlen($value) - 1];
             if (($first === '"' && $last === '"') || ($first === "'" && $last === "'")) {
                 $value = substr($value, 1, -1);
+                $value = $first === '"' ? stripcslashes($value) : str_replace(["\\'", "\\\\"], ["'", "\\"], $value);
             }
         }
         putenv("{$name}={$value}");
@@ -33,6 +34,11 @@ function load_env_file(string $path): void
 }
 
 load_env_file(__DIR__ . '/.env');
+
+if (getenv('DB_HOST') === false && PHP_SAPI !== 'cli' && basename($_SERVER['SCRIPT_NAME'] ?? '') !== 'install.php') {
+    header('Location: /install.php');
+    exit;
+}
 
 $secure = filter_var(getenv('SESSION_COOKIE_SECURE') ?: 'false', FILTER_VALIDATE_BOOL);
 function request_is_https(): bool
