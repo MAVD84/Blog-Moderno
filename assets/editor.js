@@ -2,8 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.editor-shell').forEach((shell) => {
     const editor = shell.querySelector('.rich-editor');
     const value = shell.querySelector('.editor-value');
+    const count = shell.querySelector('.editor-count');
     const form = shell.closest('form');
     const focus = () => editor.focus();
+    const updateCount = () => {
+      const text = editor.textContent.trim();
+      const words = text ? text.split(/\s+/).length : 0;
+      count.textContent = `${words} ${words === 1 ? 'palabra' : 'palabras'}`;
+    };
 
     shell.querySelectorAll('[data-command]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -31,5 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editor.focus();
       }
     });
+    editor.addEventListener('input', updateCount);
+    updateCount();
   });
 });

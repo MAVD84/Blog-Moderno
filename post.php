@@ -3,11 +3,12 @@ require_once __DIR__ . '/functions.php';
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $stmt = db()->prepare('SELECT * FROM posts WHERE id = ?'); $stmt->execute([$id]); $post = $stmt->fetch();
 if (!$post) { http_response_code(404); exit('Artículo no encontrado.'); }
+$imageSize = $post['imagen'] ? @getimagesize(UPLOAD_DIR . '/' . $post['imagen']) : false;
 $stmt = db()->prepare('SELECT nombre, contenido, fecha FROM comments WHERE post_id = ? AND aprobado = 1 ORDER BY fecha');
 $stmt->execute([$id]); $comments = $stmt->fetchAll();
 render_header($post['titulo']);
 ?>
-<article class="article"><?php if ($post['imagen']): ?><div class="cover-wrap"><img class="cover" src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>" loading="eager"></div><?php endif; ?>
+<article class="article"><?php if ($post['imagen']): ?><div class="cover-wrap"><img class="cover" src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>" loading="eager" decoding="async"<?= $imageSize ? ' width="' . (int)$imageSize[0] . '" height="' . (int)$imageSize[1] . '"' : '' ?> style="max-width:100%;height:auto;max-height:72vh;object-fit:contain"></div><?php endif; ?>
 <div class="article-body"><h1><?= e($post['titulo']) ?></h1><p class="muted">Publicado el <?= e(substr($post['fecha'], 0, 16)) ?></p>
 <?php if (is_admin()): ?><div class="actions"><a class="button warn" href="edit.php?id=<?= (int)$id ?>">Editar</a><form method="post" action="delete.php" onsubmit="return confirm('¿Eliminar este artículo?')"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$id ?>"><button class="button danger-bg">Eliminar</button></form></div><?php endif; ?>
 <div class="content rich-content"><?= sanitize_html($post['contenido']) ?></div></div></article>

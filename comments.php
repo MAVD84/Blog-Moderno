@@ -1,4 +1,56 @@
 <?php
-require_once __DIR__ . '/functions.php'; require_admin();
-$comments = db()->query('SELECT c.*, p.titulo FROM comments c JOIN posts p ON p.id = c.post_id WHERE c.aprobado = 0 ORDER BY c.fecha')->fetchAll(); render_header('Comentarios pendientes');
-?><div class="panel"><h1>Comentarios pendientes</h1><p class="muted">El correo solo es visible para ti.</p><?php foreach ($comments as $comment): ?><article class="moderation"><strong><?= e($comment['nombre']) ?></strong> <span class="muted">&lt;<?= e($comment['email']) ?>&gt;</span><small><?= e($comment['titulo']) ?></small><p><?= nl2br(e($comment['contenido'])) ?></p><div class="actions"><form method="post" action="comment-action.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$comment['id'] ?>"><button class="button" name="action" value="approve">Aprobar</button></form><form method="post" action="comment-action.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$comment['id'] ?>"><button class="button danger-bg" name="action" value="delete">Eliminar</button></form></div></article><?php endforeach; ?><?php if (!$comments): ?><p class="empty">No hay comentarios pendientes.</p><?php endif; ?></div><?php render_footer(); ?>
+require_once __DIR__ . '/functions.php';
+require_admin();
+
+$comments = db()->query(
+    'SELECT c.*, p.titulo
+     FROM comments c
+     JOIN posts p ON p.id = c.post_id
+     ORDER BY c.aprobado ASC, c.fecha DESC'
+)->fetchAll();
+$pendingCount = count(array_filter($comments, fn(array $comment): bool => !(bool)$comment['aprobado']));
+
+render_header('Administrar comentarios');
+?>
+<div class="panel">
+    <div class="moderation-title">
+        <div>
+            <h1>Administrar comentarios</h1>
+            <p class="muted">El correo solo es visible para ti.</p>
+        </div>
+        <span class="count-badge"><?= $pendingCount ?> pendiente<?= $pendingCount === 1 ? '' : 's' ?></span>
+    </div>
+
+    <?php foreach ($comments as $comment): ?>
+        <article class="moderation">
+            <div class="moderation-meta">
+                <div>
+                    <strong><?= e($comment['nombre']) ?></strong>
+                    <span class="muted">&lt;<?= e($comment['email']) ?>&gt;</span>
+                </div>
+                <span class="status-badge <?= $comment['aprobado'] ? 'approved' : 'pending' ?>">
+                    <?= $comment['aprobado'] ? 'Aprobado' : 'Pendiente' ?>
+                </span>
+            </div>
+            <small>En: <a href="post.php?id=<?= (int)$comment['post_id'] ?>"><?= e($comment['titulo']) ?></a></small>
+            <p><?= nl2br(e($comment['contenido'])) ?></p>
+            <div class="actions">
+                <?php if (!$comment['aprobado']): ?>
+                    <form method="post" action="comment-action.php">
+                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                        <input type="hidden" name="id" value="<?= (int)$comment['id'] ?>">
+                        <button class="button" name="action" value="approve">Aprobar</button>
+                    </form>
+                <?php endif; ?>
+                <form method="post" action="comment-action.php" onsubmit="return confirm('¿Eliminar este comentario? Esta acción no se puede deshacer.')">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <input type="hidden" name="id" value="<?= (int)$comment['id'] ?>">
+                    <button class="button danger-bg" name="action" value="delete">Eliminar</button>
+                </form>
+            </div>
+        </article>
+    <?php endforeach; ?>
+
+    <?php if (!$comments): ?><p class="empty">No hay comentarios.</p><?php endif; ?>
+</div>
+<?php render_footer(); ?>

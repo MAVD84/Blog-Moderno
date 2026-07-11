@@ -8,7 +8,12 @@ const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 function e(?string $value): string { return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function is_admin(): bool { return ($_SESSION['admin'] ?? false) === true; }
 function redirect(string $url): never { header("Location: {$url}"); exit; }
-function flash(string $message, string $type = 'success'): void { $_SESSION['flash'][] = [$type, $message]; }
+function flash(string $message, string $type = 'success'): void
+{
+    $entry = [$type, $message];
+    $messages = $_SESSION['flash'] ?? [];
+    if (!$messages || end($messages) !== $entry) { $_SESSION['flash'][] = $entry; }
+}
 
 function require_admin(): void
 {
@@ -115,26 +120,21 @@ function sanitize_html(string $html): string
 
 function render_editor(string $content = ''): void
 {
+    $editorVersion = (string) (@filemtime(__DIR__ . '/assets/editor.js') ?: '1');
     ?>
-    <label>Contenido</label>
+    <label class="field-label" for="rich-editor">Contenido</label>
     <div class="editor-shell">
         <div class="editor-toolbar" role="toolbar" aria-label="Formato del contenido">
-            <button type="button" data-command="bold" title="Negrita"><strong>B</strong></button>
-            <button type="button" data-command="italic" title="Cursiva"><em>I</em></button>
-            <button type="button" data-command="underline" title="Subrayado"><u>U</u></button>
-            <button type="button" data-block="h2" title="Título">H2</button>
-            <button type="button" data-block="h3" title="Subtítulo">H3</button>
-            <button type="button" data-block="p" title="Párrafo">P</button>
-            <button type="button" data-command="insertUnorderedList" title="Lista">• Lista</button>
-            <button type="button" data-command="insertOrderedList" title="Lista numerada">1. Lista</button>
-            <button type="button" data-block="blockquote" title="Cita">❝</button>
-            <button type="button" data-link title="Enlace">Enlace</button>
-            <button type="button" data-command="removeFormat" title="Quitar formato">Limpiar</button>
+            <div class="editor-group"><button type="button" data-command="bold" title="Negrita"><strong>B</strong></button><button type="button" data-command="italic" title="Cursiva"><em>I</em></button><button type="button" data-command="underline" title="Subrayado"><u>U</u></button></div>
+            <div class="editor-group"><button type="button" data-block="h2">Título</button><button type="button" data-block="h3">Subtítulo</button><button type="button" data-block="p">Párrafo</button></div>
+            <div class="editor-group"><button type="button" data-command="insertUnorderedList">• Lista</button><button type="button" data-command="insertOrderedList">1. Lista</button><button type="button" data-block="blockquote">❝ Cita</button></div>
+            <div class="editor-group"><button type="button" data-link>🔗 Enlace</button><button type="button" data-command="removeFormat">Limpiar</button></div>
         </div>
-        <div class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true"><?= sanitize_html($content) ?></div>
-        <textarea class="editor-value" name="contenido" required><?= e($content) ?></textarea>
+        <div id="rich-editor" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribe aquí el contenido de tu publicación..."><?= sanitize_html($content) ?></div>
+        <textarea class="editor-value" name="contenido" hidden required><?= e($content) ?></textarea>
+        <div class="editor-status"><span>Formato seguro activado</span><span class="editor-count">0 palabras</span></div>
     </div>
-    <script src="assets/editor.js" defer></script>
+    <script src="assets/editor.js?v=<?= e($editorVersion) ?>" defer></script>
     <?php
 }
 
@@ -142,9 +142,10 @@ function render_header(string $title): void
 {
     $messages = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
+    $styleVersion = (string) (@filemtime(__DIR__ . '/assets/style.css') ?: '1');
     ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?= e($title) ?> · Blog</title><link rel="stylesheet" href="assets/style.css"></head><body>
+<title><?= e($title) ?> · Blog</title><link rel="stylesheet" href="assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
 <nav><a class="brand" href="index.php">Blog.</a><div><?php if (is_admin()): ?>
 <a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a>
 <form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form>
