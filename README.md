@@ -24,6 +24,8 @@ ADMIN_PASSWORD=tu-contraseña-normal
 SESSION_COOKIE_SECURE=true
 ```
 
+También puedes guardarlas en un archivo `.env` ubicado junto a `config.php`. El archivo está excluido de Git y no debe subirse al repositorio. En Linux aplica permisos restrictivos con `chmod 600 .env`.
+
 La aplicación convierte `ADMIN_PASSWORD` en un hash antes de verificar el inicio de sesión. Para mayor seguridad también puedes omitir `ADMIN_PASSWORD` y configurar directamente `ADMIN_PASSWORD_HASH`. Genera el hash con:
 
 ```bash
