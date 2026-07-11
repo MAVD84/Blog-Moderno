@@ -50,14 +50,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             'site_tagline' => 'Documentando el camino',
             'site_description' => 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.',
             'footer_text' => $fields['site_name'], 'og_image' => '/assets/og-image.png',
+            'favicon_image' => '/assets/favicon.png', 'logo_image' => '',
         ];
         $stmt = $pdo->prepare('INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
         foreach ($settings as $key => $value) { $stmt->execute([$key, $value]); }
 
+        $adminHash = password_hash($fields['admin_password'], PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO users (username, display_name, password_hash, role) VALUES (?, ?, ?, 'admin')");
+        $stmt->execute([$fields['admin_user'], $fields['admin_user'], $adminHash]);
+
         $env = [
             'DB_HOST' => $fields['db_host'], 'DB_PORT' => $fields['db_port'], 'DB_NAME' => $fields['db_name'],
             'DB_USER' => $fields['db_user'], 'DB_PASSWORD' => $fields['db_password'],
-            'ADMIN_USER' => $fields['admin_user'], 'ADMIN_PASSWORD_HASH' => password_hash($fields['admin_password'], PASSWORD_DEFAULT),
+            'ADMIN_USER' => $fields['admin_user'], 'ADMIN_PASSWORD_HASH' => $adminHash,
             'APP_SECRET' => bin2hex(random_bytes(32)), 'SITE_URL' => rtrim($fields['site_url'], '/'),
             'SESSION_COOKIE_SECURE' => 'true',
         ];

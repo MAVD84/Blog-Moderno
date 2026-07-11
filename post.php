@@ -24,12 +24,13 @@ render_header($post['titulo'], [
     'image_height' => $imageSize ? $imageSize[1] : 682,
     'type' => 'article',
     'published_time' => date(DATE_ATOM, strtotime($post['fecha'])),
+    'author' => $post['author_name'] ?: 'Administrador',
 ]);
 $shareVersion = (string) (@filemtime(__DIR__ . '/assets/share.js') ?: '1');
 ?>
 <article class="article"><?php if ($post['imagen']): ?><div class="cover-wrap"><img class="cover" src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>" loading="eager" decoding="async"<?= $imageSize ? ' width="' . (int)$imageSize[0] . '" height="' . (int)$imageSize[1] . '"' : '' ?> style="max-width:100%;height:auto;max-height:72vh;object-fit:contain"></div><?php endif; ?>
-<div class="article-body"><h1><?= e($post['titulo']) ?></h1><p class="muted">Publicado el <?= e(substr($post['fecha'], 0, 16)) ?></p>
-<?php if (is_admin()): ?><div class="actions"><a class="button warn" href="edit.php?id=<?= (int)$id ?>">Editar</a><form method="post" action="delete.php" onsubmit="return confirm('¿Eliminar este artículo?')"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$id ?>"><button class="button danger-bg">Eliminar</button></form></div><?php endif; ?>
+<div class="article-body"><h1><?= e($post['titulo']) ?></h1><p class="muted">Publicado el <?= e(substr($post['fecha'], 0, 16)) ?> · Por <?= e($post['author_name'] ?: 'Administrador') ?></p>
+<?php if (can_edit_post($post)): ?><div class="actions"><a class="button warn" href="edit.php?id=<?= (int)$id ?>">Editar</a><form method="post" action="delete.php" onsubmit="return confirm('¿Eliminar este artículo?')"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$id ?>"><button class="button danger-bg">Eliminar</button></form></div><?php endif; ?>
 <div class="content rich-content"><?= sanitize_html($post['contenido']) ?></div>
 <div class="post-tools post-tools-end"><button type="button" class="button share-button" data-share data-title="<?= e($post['titulo']) ?>" data-text="Mira este artículo: <?= e($post['titulo']) ?>">Compartir</button><span class="share-status" role="status" aria-live="polite"></span></div></div></article>
 <section class="columns"><div class="panel"><h2>Comentarios</h2><?php foreach ($comments as $comment): ?><article class="comment"><strong><?= e($comment['nombre']) ?></strong><small><?= e(substr($comment['fecha'], 0, 10)) ?></small><p><?= nl2br(e($comment['contenido'])) ?></p></article><?php endforeach; ?><?php if (!$comments): ?><p class="muted">Todavía no hay comentarios aprobados.</p><?php endif; ?></div>

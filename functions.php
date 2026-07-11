@@ -6,17 +6,25 @@ const UPLOAD_DIR = __DIR__ . '/uploads';
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 function e(?string $value): string { return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
-function is_admin(): bool
+function is_logged_in(): bool
 {
-    if (($_SESSION['admin'] ?? false) !== true) { return false; }
+    if (($_SESSION['authenticated'] ?? $_SESSION['admin'] ?? false) !== true) { return false; }
     $lastActivity = (int)($_SESSION['last_activity'] ?? 0);
     if ($lastActivity === 0 || time() - $lastActivity > 1800) {
-        unset($_SESSION['admin'], $_SESSION['last_activity']);
+        unset($_SESSION['authenticated'], $_SESSION['admin'], $_SESSION['role'], $_SESSION['user_id'], $_SESSION['display_name'], $_SESSION['last_activity']);
         return false;
     }
     $_SESSION['last_activity'] = time();
     return true;
 }
+function is_admin(): bool { return is_logged_in() && ($_SESSION['role'] ?? 'admin') === 'admin'; }
+function current_user_id(): ?int { return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null; }
+function current_author_name(): string
+{
+    $name = $_SESSION['display_name'] ?? getenv('ADMIN_USER') ?: 'Administrador';
+    return (string)$name;
+}
+function can_edit_post(array $post): bool { return is_admin() || (is_logged_in() && current_user_id() && (int)($post['author_id'] ?? 0) === current_user_id()); }
 function redirect(string $url): never { header("Location: {$url}"); exit; }
 function post_url(array $post): string { return '/' . rawurlencode($post['slug']); }
 
@@ -46,6 +54,8 @@ function site_settings(): array
         'site_description' => 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.',
         'footer_text' => 'Blog Personal.',
         'og_image' => '/assets/og-image.png',
+        'favicon_image' => '/assets/favicon.png',
+        'logo_image' => '',
     ];
     try {
         foreach (db()->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll() as $row) {
@@ -101,12 +111,18 @@ function flash(string $message, string $type = 'success'): void
     if (!$messages || end($messages) !== $entry) { $_SESSION['flash'][] = $entry; }
 }
 
-function require_admin(): void
+function require_login(): void
 {
-    if (!is_admin()) {
+    if (!is_logged_in()) {
         flash('Por favor inicia sesión.', 'error');
         redirect('login.php');
     }
+}
+
+function require_admin(): void
+{
+    require_login();
+    if (!is_admin()) { http_response_code(403); exit('No tienes permisos para realizar esta acción.'); }
 }
 
 function csrf_token(): string
@@ -294,8 +310,8 @@ function render_header(string $title, array $metadata = []): void
 <meta name="description" content="<?= e($description) ?>">
 <meta name="robots" content="<?= e($metadata['robots'] ?? 'index,follow,max-image-preview:large') ?>">
 <link rel="canonical" href="<?= e($canonical) ?>">
-<link rel="icon" type="image/png" href="/assets/favicon.png">
-<link rel="apple-touch-icon" href="/assets/favicon.png">
+<link rel="icon" href="<?= e(site_setting('favicon_image')) ?>">
+<link rel="apple-touch-icon" href="<?= e(site_setting('favicon_image')) ?>">
 <meta property="og:locale" content="es_MX">
 <meta property="og:site_name" content="<?= e($siteName) ?>">
 <meta property="og:type" content="<?= e($type) ?>">
@@ -310,10 +326,10 @@ function render_header(string $title, array $metadata = []): void
 <meta name="twitter:description" content="<?= e($description) ?>">
 <meta name="twitter:image" content="<?= e($socialImage) ?>">
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
-<?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => 'Miguel Vega'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url('/assets/favicon.png')]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
+<?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => $metadata['author'] ?? 'Administrador'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url(site_setting('favicon_image'))]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
 <link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
-<nav><a class="brand" href="index.php"><?= e(site_setting('site_name')) ?></a><div><?php if (is_admin()): ?>
-<a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a><a href="security.php">Seguridad</a><a href="settings.php">Configuración</a>
+<nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a><div><?php if (is_logged_in()): ?>
+<a href="admin.php">Escribir</a><?php if (is_admin()): ?><a href="comments.php">Comentarios</a><a href="users.php">Usuarios</a><a href="security.php">Seguridad</a><a href="settings.php">Configuración</a><?php endif; ?>
 <form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form>
 <?php endif; ?></div></nav>
 <main><?php foreach ($messages as [$type, $message]): ?><div class="flash <?= e($type) ?>"><?= e($message) ?></div><?php endforeach; ?>

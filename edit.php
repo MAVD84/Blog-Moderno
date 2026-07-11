@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/functions.php'; require_admin();
+require_once __DIR__ . '/functions.php'; require_login();
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT); $stmt = db()->prepare('SELECT * FROM posts WHERE id = ?'); $stmt->execute([$id]); $post = $stmt->fetch();
 if (!$post) { http_response_code(404); exit('Artículo no encontrado.'); }
+if (!can_edit_post($post)) { http_response_code(403); exit('No tienes permisos para editar este artículo.'); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf(); $titulo = trim($_POST['titulo'] ?? ''); $contenido = trim($_POST['contenido'] ?? '');
     if ($titulo === '' || $contenido === '') { flash('Título y contenido son obligatorios.', 'error'); }

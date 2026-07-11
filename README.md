@@ -40,7 +40,8 @@ php -r "echo password_hash('cambia-esta-clave', PASSWORD_DEFAULT), PHP_EOL;"
 
 En una instalación existente ejecuta también `migrations/002_login_security.sql`. Esta migración activa el registro y bloqueo progresivo de intentos. Las sesiones administrativas expiran después de 30 minutos de inactividad.
 Después ejecuta `migrations/003_pretty_urls.sql` para activar URLs como `/polygon-blockchain`. Apache debe permitir reglas `.htaccess` (`AllowOverride FileInfo` o `AllowOverride All`).
-Ejecuta `migrations/004_site_settings.sql` para habilitar la personalización desde `settings.php`.
+Ejecuta `migrations/004_site_settings.sql` para habilitar la personalización de nombre, textos, metadata, favicon y logo desde `settings.php`.
+Ejecuta `migrations/005_users_and_authors.sql` para habilitar administradores, editores y autores de publicaciones.
 
 3. Concede permiso de escritura al usuario del servidor web sobre `uploads/`.
 4. Configura el document root apuntando a este directorio.
