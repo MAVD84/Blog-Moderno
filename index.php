@@ -2,7 +2,7 @@
 require_once __DIR__ . '/functions.php';
 $posts = db()->query('SELECT id, titulo, slug, contenido, imagen, fecha FROM posts ORDER BY fecha DESC')->fetchAll();
 $posts = array_map('ensure_post_slug', $posts);
-render_header('Inicio');
+render_header('Inicio', ['canonical' => '/']);
 ?>
 <header class="hero"><h1>Polygon Blockchain</h1><p>Documentando el camino</p></header>
 <div class="grid"><?php foreach ($posts as $post): ?><article class="card">

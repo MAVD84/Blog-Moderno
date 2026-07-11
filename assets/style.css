@@ -49,6 +49,7 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .article h1 { margin: 0; font-size: clamp(2rem,6vw,2.8rem); line-height: 1.15; letter-spacing: -.035em; overflow-wrap: anywhere; }
 .article .muted { margin: 12px 0 0; }
 .post-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.post-tools-end { margin-top: 32px; padding-top: 22px; border-top: 1px solid var(--line); }
 .share-button { background: #344054; }
 .share-button:hover { background: #1d2939; }
 .share-status { color: var(--success); font-size: .85rem; font-weight: 700; }

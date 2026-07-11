@@ -10,7 +10,7 @@ $failed24h = (int)db()->query(
     'SELECT COUNT(*) FROM login_attempts WHERE successful = 0 AND attempted_at >= NOW() - INTERVAL 24 HOUR'
 )->fetchColumn();
 
-render_header('Seguridad');
+render_header('Seguridad', ['robots' => 'noindex,nofollow']);
 ?>
 <div class="panel">
     <div class="moderation-title"><div><h1>Registro de seguridad</h1><p class="muted">Últimos 100 intentos de acceso. Las direcciones IP no se guardan en claro.</p></div><span class="count-badge"><?= $failed24h ?> fallo<?= $failed24h === 1 ? '' : 's' ?> / 24 h</span></div>

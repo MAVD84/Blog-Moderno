@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $waitSeconds = login_throttle_seconds();
     if ($waitSeconds > 0) {
         flash('Demasiados intentos. Espera ' . max(1, (int)ceil($waitSeconds / 60)) . ' minuto(s).', 'error');
-        render_header('Acceso');
+        render_header('Acceso', ['robots' => 'noindex,nofollow']);
         ?><div class="panel narrow"><h1>Acceso administrativo</h1><p class="muted">El acceso está temporalmente limitado.</p></div><?php render_footer(); exit;
     }
     $user = getenv('ADMIN_USER') ?: '';
@@ -22,5 +22,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     usleep(random_int(250000, 500000));
     flash('Usuario o contraseña incorrectos.', 'error');
 }
-render_header('Acceso');
+render_header('Acceso', ['robots' => 'noindex,nofollow']);
 ?><div class="panel narrow"><h1>Acceso administrativo</h1><form method="post"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><label>Usuario<input name="username" required></label><label>Contraseña<input type="password" name="password" required></label><button class="button">Ingresar</button></form></div><?php render_footer(); ?>

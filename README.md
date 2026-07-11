@@ -24,6 +24,7 @@ DB_PASSWORD=una-clave-segura
 ADMIN_USER=admin
 ADMIN_PASSWORD=tu-contraseña-normal
 APP_SECRET=una-clave-aleatoria-larga
+SITE_URL=https://jrz.wtf
 SESSION_COOKIE_SECURE=true
 ```
 

@@ -20,6 +20,21 @@ function is_admin(): bool
 function redirect(string $url): never { header("Location: {$url}"); exit; }
 function post_url(array $post): string { return '/' . rawurlencode($post['slug']); }
 
+function site_base_url(): string
+{
+    $configured = rtrim(getenv('SITE_URL') ?: '', '/');
+    if (filter_var($configured, FILTER_VALIDATE_URL)) { return $configured; }
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    if (!preg_match('/^[a-z0-9.-]+(?::\d+)?$/i', $host)) { $host = 'localhost'; }
+    return (request_is_https() ? 'https' : 'http') . '://' . $host;
+}
+
+function absolute_url(string $path): string
+{
+    if (filter_var($path, FILTER_VALIDATE_URL)) { return $path; }
+    return site_base_url() . '/' . ltrim($path, '/');
+}
+
 function slugify(string $title): string
 {
     $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title) ?: $title;
@@ -220,18 +235,47 @@ function render_editor(string $content = ''): void
         <textarea class="editor-value" name="contenido" hidden><?= e($content) ?></textarea>
         <div class="editor-status"><span>Formato seguro activado</span><span class="editor-count">0 palabras</span></div>
     </div>
-    <script src="assets/editor.js?v=<?= e($editorVersion) ?>" defer></script>
+    <script src="/assets/editor.js?v=<?= e($editorVersion) ?>" defer></script>
     <?php
 }
 
-function render_header(string $title): void
+function render_header(string $title, array $metadata = []): void
 {
     $messages = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
     $styleVersion = (string) (@filemtime(__DIR__ . '/assets/style.css') ?: '1');
+    $siteName = 'Polygon Blockchain';
+    $pageTitle = $metadata['title'] ?? ($title === 'Inicio' ? $siteName . ' · Blog' : $title . ' · ' . $siteName);
+    $description = $metadata['description'] ?? 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.';
+    $canonical = absolute_url($metadata['canonical'] ?? (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'));
+    $socialImage = absolute_url($metadata['image'] ?? '/assets/og-image.png');
+    $type = $metadata['type'] ?? 'website';
+    $imageWidth = (int)($metadata['image_width'] ?? 1320);
+    $imageHeight = (int)($metadata['image_height'] ?? 682);
     ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?= e($title) ?> · Blog</title><link rel="stylesheet" href="assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
+<title><?= e($pageTitle) ?></title>
+<meta name="description" content="<?= e($description) ?>">
+<meta name="robots" content="<?= e($metadata['robots'] ?? 'index,follow,max-image-preview:large') ?>">
+<link rel="canonical" href="<?= e($canonical) ?>">
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="<?= e($siteName) ?>">
+<meta property="og:type" content="<?= e($type) ?>">
+<meta property="og:title" content="<?= e($pageTitle) ?>">
+<meta property="og:description" content="<?= e($description) ?>">
+<meta property="og:url" content="<?= e($canonical) ?>">
+<meta property="og:image" content="<?= e($socialImage) ?>">
+<meta property="og:image:alt" content="<?= e($metadata['image_alt'] ?? $pageTitle) ?>">
+<meta property="og:image:width" content="<?= $imageWidth ?>"><meta property="og:image:height" content="<?= $imageHeight ?>">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<?= e($pageTitle) ?>">
+<meta name="twitter:description" content="<?= e($description) ?>">
+<meta name="twitter:image" content="<?= e($socialImage) ?>">
+<?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
+<?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => 'Miguel Vega'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url('/assets/favicon.png')]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
+<link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
 <nav><a class="brand" href="index.php">Blog.</a><div><?php if (is_admin()): ?>
 <a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a><a href="security.php">Seguridad</a>
 <form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form>

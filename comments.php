@@ -17,7 +17,7 @@ foreach ($comments as &$comment) {
 unset($comment);
 $pendingCount = count(array_filter($comments, fn(array $comment): bool => !(bool)$comment['aprobado']));
 
-render_header('Administrar comentarios');
+render_header('Administrar comentarios', ['robots' => 'noindex,nofollow']);
 ?>
 <div class="panel">
     <div class="moderation-title">
