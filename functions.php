@@ -64,6 +64,80 @@ function delete_image(?string $name): void
     }
 }
 
+function sanitize_html(string $html): string
+{
+    $allowedTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'a'];
+    $document = new DOMDocument('1.0', 'UTF-8');
+    libxml_use_internal_errors(true);
+    $document->loadHTML(
+        '<?xml encoding="utf-8" ?><div id="editor-root">' . $html . '</div>',
+        LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    $root = $document->getElementById('editor-root');
+    if (!$root) { return ''; }
+
+    $sanitizeNode = function (DOMNode $node) use (&$sanitizeNode, $allowedTags): void {
+        foreach (iterator_to_array($node->childNodes) as $child) {
+            if ($child instanceof DOMElement) {
+                $tag = strtolower($child->tagName);
+                if (in_array($tag, ['script', 'style', 'iframe', 'object', 'embed'], true)) {
+                    $child->parentNode?->removeChild($child);
+                    continue;
+                }
+                $sanitizeNode($child);
+                if (!in_array($tag, $allowedTags, true)) {
+                    while ($child->firstChild) { $child->parentNode?->insertBefore($child->firstChild, $child); }
+                    $child->parentNode?->removeChild($child);
+                    continue;
+                }
+                foreach (iterator_to_array($child->attributes) as $attribute) {
+                    if ($tag !== 'a' || !in_array(strtolower($attribute->name), ['href', 'title'], true)) {
+                        $child->removeAttribute($attribute->name);
+                    }
+                }
+                if ($tag === 'a') {
+                    $href = trim($child->getAttribute('href'));
+                    if ($href !== '' && !preg_match('#^(https?://|mailto:|/|\#)#i', $href)) {
+                        $child->removeAttribute('href');
+                    }
+                    $child->setAttribute('rel', 'noopener noreferrer');
+                }
+            }
+        }
+    };
+    $sanitizeNode($root);
+
+    $result = '';
+    foreach ($root->childNodes as $child) { $result .= $document->saveHTML($child); }
+    return trim($result);
+}
+
+function render_editor(string $content = ''): void
+{
+    ?>
+    <label>Contenido</label>
+    <div class="editor-shell">
+        <div class="editor-toolbar" role="toolbar" aria-label="Formato del contenido">
+            <button type="button" data-command="bold" title="Negrita"><strong>B</strong></button>
+            <button type="button" data-command="italic" title="Cursiva"><em>I</em></button>
+            <button type="button" data-command="underline" title="Subrayado"><u>U</u></button>
+            <button type="button" data-block="h2" title="Título">H2</button>
+            <button type="button" data-block="h3" title="Subtítulo">H3</button>
+            <button type="button" data-block="p" title="Párrafo">P</button>
+            <button type="button" data-command="insertUnorderedList" title="Lista">• Lista</button>
+            <button type="button" data-command="insertOrderedList" title="Lista numerada">1. Lista</button>
+            <button type="button" data-block="blockquote" title="Cita">❝</button>
+            <button type="button" data-link title="Enlace">Enlace</button>
+            <button type="button" data-command="removeFormat" title="Quitar formato">Limpiar</button>
+        </div>
+        <div class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true"><?= sanitize_html($content) ?></div>
+        <textarea class="editor-value" name="contenido" required><?= e($content) ?></textarea>
+    </div>
+    <script src="assets/editor.js" defer></script>
+    <?php
+}
+
 function render_header(string $title): void
 {
     $messages = $_SESSION['flash'] ?? [];

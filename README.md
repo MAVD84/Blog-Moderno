@@ -1,10 +1,11 @@
 # Blog Moderno — PHP y MySQL
 
 Blog con publicaciones, imágenes y comentarios sujetos a aprobación administrativa.
+El panel incluye un editor visual seguro para aplicar títulos, estilos, listas, citas y enlaces al contenido.
 
 ## Requisitos
 
-- PHP 8.1 o posterior con extensiones `pdo_mysql`, `fileinfo` y `mbstring`.
+- PHP 8.1 o posterior con extensiones `pdo_mysql`, `fileinfo`, `mbstring` y `dom`.
 - MySQL 8 o MariaDB 10.5 o posterior.
 - Un servidor Apache o Nginx con acceso de escritura al directorio `uploads/`.
 

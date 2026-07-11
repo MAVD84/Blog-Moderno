@@ -7,10 +7,10 @@ $stmt = db()->prepare('SELECT nombre, contenido, fecha FROM comments WHERE post_
 $stmt->execute([$id]); $comments = $stmt->fetchAll();
 render_header($post['titulo']);
 ?>
-<article class="article"><?php if ($post['imagen']): ?><img class="cover" src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>"><?php endif; ?>
+<article class="article"><?php if ($post['imagen']): ?><div class="cover-wrap"><img class="cover" src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>" loading="eager"></div><?php endif; ?>
 <div class="article-body"><h1><?= e($post['titulo']) ?></h1><p class="muted">Publicado el <?= e(substr($post['fecha'], 0, 16)) ?></p>
 <?php if (is_admin()): ?><div class="actions"><a class="button warn" href="edit.php?id=<?= (int)$id ?>">Editar</a><form method="post" action="delete.php" onsubmit="return confirm('¿Eliminar este artículo?')"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$id ?>"><button class="button danger-bg">Eliminar</button></form></div><?php endif; ?>
-<div class="content"><?= nl2br(e($post['contenido'])) ?></div></div></article>
+<div class="content rich-content"><?= sanitize_html($post['contenido']) ?></div></div></article>
 <section class="columns"><div class="panel"><h2>Comentarios</h2><?php foreach ($comments as $comment): ?><article class="comment"><strong><?= e($comment['nombre']) ?></strong><small><?= e(substr($comment['fecha'], 0, 10)) ?></small><p><?= nl2br(e($comment['contenido'])) ?></p></article><?php endforeach; ?><?php if (!$comments): ?><p class="muted">Todavía no hay comentarios aprobados.</p><?php endif; ?></div>
 <div class="panel"><h2>Deja un comentario</h2><p class="muted">Tu correo será privado. El comentario aparecerá después de ser aprobado.</p>
 <form method="post" action="comment-submit.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="post_id" value="<?= (int)$id ?>"><input class="honeypot" name="website" tabindex="-1" autocomplete="off">
