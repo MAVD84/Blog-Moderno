@@ -20,11 +20,11 @@ DB_NAME=blog
 DB_USER=blog_user
 DB_PASSWORD=una-clave-segura
 ADMIN_USER=admin
-ADMIN_PASSWORD_HASH=<hash de la contraseña>
+ADMIN_PASSWORD=tu-contraseña-normal
 SESSION_COOKIE_SECURE=true
 ```
 
-Genera el hash administrativo con:
+La aplicación convierte `ADMIN_PASSWORD` en un hash antes de verificar el inicio de sesión. Para mayor seguridad también puedes omitir `ADMIN_PASSWORD` y configurar directamente `ADMIN_PASSWORD_HASH`. Genera el hash con:
 
 ```bash
 php -r "echo password_hash('cambia-esta-clave', PASSWORD_DEFAULT), PHP_EOL;"

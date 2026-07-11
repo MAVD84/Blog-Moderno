@@ -1,7 +1,13 @@
 <?php
 require_once __DIR__ . '/functions.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verify_csrf(); $user = getenv('ADMIN_USER') ?: ''; $hash = getenv('ADMIN_PASSWORD_HASH') ?: '';
+    verify_csrf();
+    $user = getenv('ADMIN_USER') ?: '';
+    $hash = getenv('ADMIN_PASSWORD_HASH') ?: '';
+    $plainPassword = getenv('ADMIN_PASSWORD') ?: '';
+    if ($hash === '' && $plainPassword !== '') {
+        $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
+    }
     if ($user && $hash && hash_equals($user, $_POST['username'] ?? '') && password_verify($_POST['password'] ?? '', $hash)) {
         session_regenerate_id(true); $_SESSION['admin'] = true; redirect('admin.php');
     }
