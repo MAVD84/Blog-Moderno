@@ -12,7 +12,7 @@
 
             {% if post.imagen %}
             <div class="h-48 w-full overflow-hidden">
-                <img src="{{ url_for('static', filename='uploads/' + post.imagen) }}"
+                <img src="{{ url_for('uploaded_file', filename=post.imagen) }}"
                      alt="{{ post.titulo }}" class="w-full h-full object-cover transform hover:scale-105 transition duration-500">
             </div>
             {% endif %}

@@ -5,7 +5,7 @@
 
         {% if post.imagen %}
         <div class="relative w-full h-64 md:h-96">
-            <img src="{{ url_for('static', filename='uploads/' + post.imagen) }}"
+            <img src="{{ url_for('uploaded_file', filename=post.imagen) }}"
                  class="w-full h-full object-cover"
                  alt="{{ post.titulo }}">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
@@ -34,18 +34,18 @@
                    <span>Editar Post</span>
                 </a>
 
-                <a href="/borrar/{{ post.id }}"
-                   onclick="return confirm('⚠️ ¿Estás SEGURO de que quieres eliminar este artículo? No se puede deshacer.')"
-                   class="flex items-center space-x-2 bg-red-100 text-red-600 px-4 py-2 rounded-lg hover:bg-red-200 border border-red-200 transition font-bold text-sm">
+                <form method="POST" action="{{ url_for('borrar', id=post.id) }}"
+                      onsubmit="return confirm('⚠️ ¿Estás SEGURO de que quieres eliminar este artículo? No se puede deshacer.')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="flex items-center space-x-2 bg-red-100 text-red-600 px-4 py-2 rounded-lg hover:bg-red-200 border border-red-200 transition font-bold text-sm">
                    <span>🗑</span>
                    <span>Eliminar</span>
-                </a>
+                    </button>
+                </form>
             </div>
             {% endif %}
 
-            <div class="prose lg:prose-xl max-w-none text-gray-700 leading-relaxed break-words">
-                {{ post.contenido.replace('\n', '<br>') | safe }}
-            </div>
+            <div class="prose lg:prose-xl max-w-none text-gray-700 leading-relaxed break-words whitespace-pre-wrap">{{ post.contenido }}</div>
 
         </div>
     </article>
