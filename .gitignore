@@ -3,6 +3,7 @@ __pycache__/
 .env
 .venv/
 venv/
-blog.db
-uploads/
 .pytest_cache/
+uploads/*
+!uploads/.gitkeep
+!uploads/.htaccess
