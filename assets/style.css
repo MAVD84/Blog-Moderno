@@ -48,6 +48,10 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .cover { display: block; width: auto; max-width: 100%; height: auto; max-height: 72vh; object-fit: contain; }
 .article h1 { margin: 0; font-size: clamp(2rem,6vw,2.8rem); line-height: 1.15; letter-spacing: -.035em; overflow-wrap: anywhere; }
 .article .muted { margin: 12px 0 0; }
+.post-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.share-button { background: #344054; }
+.share-button:hover { background: #1d2939; }
+.share-status { color: var(--success); font-size: .85rem; font-weight: 700; }
 .content { margin-top: 28px; color: #344054; font-size: 1.06rem; overflow-wrap: anywhere; }
 .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 22px 0 8px; }
 .actions form { display: inline-flex; margin: 0; }
@@ -92,6 +96,10 @@ input[type="file"]::file-selector-button { margin-right: 12px; padding: 8px 12px
 .status-badge { padding: 5px 9px; }
 .status-badge.pending { color: #92400e; background: #fef3c7; }
 .status-badge.approved { color: #166534; background: #dcfce7; }
+.security-table-wrap { width: 100%; overflow-x: auto; }
+.security-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+.security-table th, .security-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--line); }
+.security-table th { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
 .empty { padding: 48px 20px; text-align: center; color: #98a2b3; }
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 

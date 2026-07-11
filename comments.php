@@ -3,11 +3,18 @@ require_once __DIR__ . '/functions.php';
 require_admin();
 
 $comments = db()->query(
-    'SELECT c.*, p.titulo
+    'SELECT c.*, p.titulo, p.slug
      FROM comments c
      JOIN posts p ON p.id = c.post_id
      ORDER BY c.aprobado ASC, c.fecha DESC'
 )->fetchAll();
+foreach ($comments as &$comment) {
+    if (empty($comment['slug'])) {
+        $article = ensure_post_slug(['id' => (int)$comment['post_id'], 'titulo' => $comment['titulo'], 'slug' => null]);
+        $comment['slug'] = $article['slug'];
+    }
+}
+unset($comment);
 $pendingCount = count(array_filter($comments, fn(array $comment): bool => !(bool)$comment['aprobado']));
 
 render_header('Administrar comentarios');
@@ -32,7 +39,7 @@ render_header('Administrar comentarios');
                     <?= $comment['aprobado'] ? 'Aprobado' : 'Pendiente' ?>
                 </span>
             </div>
-            <small>En: <a href="post.php?id=<?= (int)$comment['post_id'] ?>"><?= e($comment['titulo']) ?></a></small>
+            <small>En: <a href="<?= e('/' . rawurlencode($comment['slug'])) ?>"><?= e($comment['titulo']) ?></a></small>
             <p><?= nl2br(e($comment['contenido'])) ?></p>
             <div class="actions">
                 <?php if (!$comment['aprobado']): ?>

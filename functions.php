@@ -6,8 +6,46 @@ const UPLOAD_DIR = __DIR__ . '/uploads';
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 function e(?string $value): string { return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
-function is_admin(): bool { return ($_SESSION['admin'] ?? false) === true; }
+function is_admin(): bool
+{
+    if (($_SESSION['admin'] ?? false) !== true) { return false; }
+    $lastActivity = (int)($_SESSION['last_activity'] ?? 0);
+    if ($lastActivity === 0 || time() - $lastActivity > 1800) {
+        unset($_SESSION['admin'], $_SESSION['last_activity']);
+        return false;
+    }
+    $_SESSION['last_activity'] = time();
+    return true;
+}
 function redirect(string $url): never { header("Location: {$url}"); exit; }
+function post_url(array $post): string { return '/' . rawurlencode($post['slug']); }
+
+function slugify(string $title): string
+{
+    $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title) ?: $title;
+    $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $ascii) ?? '', '-'));
+    return substr($slug ?: 'articulo', 0, 190);
+}
+
+function unique_post_slug(string $title, ?int $excludeId = null): string
+{
+    $base = slugify($title); $slug = $base; $suffix = 2;
+    do {
+        $sql = 'SELECT 1 FROM posts WHERE slug = ?' . ($excludeId ? ' AND id <> ?' : '') . ' LIMIT 1';
+        $stmt = db()->prepare($sql); $stmt->execute($excludeId ? [$slug, $excludeId] : [$slug]);
+        if (!$stmt->fetchColumn()) { return $slug; }
+        $slug = substr($base, 0, 180) . '-' . $suffix++;
+    } while ($suffix < 10000);
+    throw new RuntimeException('No se pudo generar una URL única para el artículo.');
+}
+
+function ensure_post_slug(array $post): array
+{
+    if (!empty($post['slug'])) { return $post; }
+    $post['slug'] = unique_post_slug($post['titulo'], (int)$post['id']);
+    $stmt = db()->prepare('UPDATE posts SET slug = ? WHERE id = ?'); $stmt->execute([$post['slug'], $post['id']]);
+    return $post;
+}
 function flash(string $message, string $type = 'success'): void
 {
     $entry = [$type, $message];
@@ -35,6 +73,54 @@ function verify_csrf(): void
     if (!is_string($token) || !hash_equals($_SESSION['csrf'] ?? '', $token)) {
         http_response_code(400);
         exit('Solicitud inválida. Actualiza la página e inténtalo nuevamente.');
+    }
+}
+
+function login_ip_hash(): string
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $key = getenv('APP_SECRET') ?: env_required('DB_PASSWORD');
+    return hash_hmac('sha256', $ip, $key);
+}
+
+function login_throttle_seconds(): int
+{
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) AS failures, UNIX_TIMESTAMP(MAX(attempted_at)) AS last_attempt
+         FROM login_attempts
+         WHERE ip_hash = ? AND successful = 0 AND resolved_at IS NULL
+           AND attempted_at >= NOW() - INTERVAL 24 HOUR'
+    );
+    $stmt->execute([login_ip_hash()]);
+    $row = $stmt->fetch();
+    $failures = (int)($row['failures'] ?? 0);
+    $lastAttempt = (int)($row['last_attempt'] ?? 0);
+    $lockSeconds = match (true) {
+        $failures >= 12 => 86400,
+        $failures >= 8 => 1800,
+        $failures >= 5 => 300,
+        default => 0,
+    };
+    return max(0, $lastAttempt + $lockSeconds - time());
+}
+
+function record_login_attempt(bool $successful): void
+{
+    $pdo = db();
+    $hash = login_ip_hash();
+    $pdo->beginTransaction();
+    try {
+        if ($successful) {
+            $stmt = $pdo->prepare('UPDATE login_attempts SET resolved_at = NOW() WHERE ip_hash = ? AND successful = 0 AND resolved_at IS NULL');
+            $stmt->execute([$hash]);
+        }
+        $stmt = $pdo->prepare('INSERT INTO login_attempts (ip_hash, successful) VALUES (?, ?)');
+        $stmt->execute([$hash, $successful ? 1 : 0]);
+        if (random_int(1, 100) === 1) { $pdo->exec('DELETE FROM login_attempts WHERE attempted_at < NOW() - INTERVAL 30 DAY'); }
+        $pdo->commit();
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) { $pdo->rollBack(); }
+        throw $error;
     }
 }
 
@@ -147,9 +233,9 @@ function render_header(string $title): void
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e($title) ?> · Blog</title><link rel="stylesheet" href="assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
 <nav><a class="brand" href="index.php">Blog.</a><div><?php if (is_admin()): ?>
-<a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a>
+<a href="admin.php">Escribir</a><a href="comments.php">Comentarios</a><a href="security.php">Seguridad</a>
 <form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form>
-<?php else: ?><a href="login.php">Entrar</a><?php endif; ?></div></nav>
+<?php endif; ?></div></nav>
 <main><?php foreach ($messages as [$type, $message]): ?><div class="flash <?= e($type) ?>"><?= e($message) ?></div><?php endforeach; ?>
 <?php
 }

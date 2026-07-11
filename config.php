@@ -35,12 +35,38 @@ function load_env_file(string $path): void
 load_env_file(__DIR__ . '/.env');
 
 $secure = filter_var(getenv('SESSION_COOKIE_SECURE') ?: 'false', FILTER_VALIDATE_BOOL);
+function request_is_https(): bool
+{
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+}
+
+if ($secure && !request_is_https() && PHP_SAPI !== 'cli') {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host !== '' && preg_match('/^[a-z0-9.-]+(?::\d+)?$/i', $host)) {
+        header('Location: https://' . $host . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
+        exit;
+    }
+}
+
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+session_name($secure ? '__Host-blog_session' : 'blog_session');
 session_set_cookie_params([
     'httponly' => true,
     'secure' => $secure,
-    'samesite' => 'Lax',
+    'samesite' => 'Strict',
+    'path' => '/',
 ]);
 session_start();
+
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+header('Cache-Control: no-store');
+if (request_is_https()) { header('Strict-Transport-Security: max-age=31536000; includeSubDomains'); }
 
 function env_required(string $name): string
 {
