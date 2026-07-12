@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-$posts = db()->query("SELECT p.id,p.titulo,p.slug,p.contenido,p.imagen,p.author_name,p.fecha,p.post_type,COALESCE(m.avatar,u.avatar) avatar,COALESCE(m.profile_slug,u.profile_slug) profile_slug,COALESCE(m.profile_public,u.profile_public) profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id LEFT JOIN users u ON u.id=p.author_id WHERE p.status='published' ORDER BY p.fecha DESC")->fetchAll();
+$posts = db()->query("SELECT p.id,p.titulo,p.slug,p.contenido,p.imagen,p.author_name,p.fecha,p.post_type,COALESCE(m.avatar,u.avatar) avatar,COALESCE(m.profile_slug,u.profile_slug) profile_slug,COALESCE(m.profile_public,u.profile_public) profile_public,COALESCE(v.total,0) views,COALESCE(r.likes,0) likes,COALESCE(r.dislikes,0) dislikes,COALESCE(s.total,0) shares FROM posts p LEFT JOIN members m ON m.id=p.member_author_id LEFT JOIN users u ON u.id=p.author_id LEFT JOIN (SELECT post_id,COUNT(*) total FROM post_views GROUP BY post_id) v ON v.post_id=p.id LEFT JOIN (SELECT post_id,SUM(reaction=1) likes,SUM(reaction=-1) dislikes FROM post_reactions GROUP BY post_id) r ON r.post_id=p.id LEFT JOIN (SELECT post_id,COUNT(*) total FROM post_shares GROUP BY post_id) s ON s.post_id=p.id WHERE p.status='published' ORDER BY p.fecha DESC")->fetchAll();
 $posts = array_map('ensure_post_slug', $posts);
 render_header('Inicio', ['canonical' => '/']);
 ?>
@@ -8,6 +8,6 @@ render_header('Inicio', ['canonical' => '/']);
 <div class="grid"><?php foreach ($posts as $post): ?><article class="card">
 <?php if ($post['imagen']): ?><img src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>"><?php endif; ?>
 <div class="pad"><div class="author-meta"><?php $profileUrl=public_profile_url($post);if($profileUrl):?><a class="author-profile-link" href="<?=e($profileUrl)?>"><?php endif;?><?php if($post['avatar']):?><img class="avatar avatar-sm" src="/uploads/<?=e($post['avatar'])?>" alt=""><?php endif;?><small><?= e(format_date($post['fecha'])) ?> · <?= e($post['author_name'] ?: 'Administrador') ?></small><?php if($profileUrl):?></a><?php endif;?></div><h2><a href="<?= e(post_url($post)) ?>"><?= e($post['titulo']) ?></a></h2>
-<p><?= e(mb_strimwidth(strip_tags($post['contenido']), 0, 150, '…')) ?></p><a class="more" href="<?= e(post_url($post)) ?>">Leer más →</a></div></article>
+<p><?= e(mb_strimwidth(strip_tags($post['contenido']), 0, 150, '…')) ?></p><a class="more" href="<?= e(post_url($post)) ?>">Leer más →</a><div class="card-stats" aria-label="Estadísticas"><span title="Vistas">👁 <?=(int)$post['views']?></span><span title="Me gusta">👍 <?=(int)$post['likes']?></span><span title="No me gusta">👎 <?=(int)$post['dislikes']?></span><span title="Compartidos">↗ <?=(int)$post['shares']?></span></div></div></article>
 <?php endforeach; ?><?php if (!$posts): ?><p class="empty">No hay artículos todavía.</p><?php endif; ?></div>
 <?php render_footer(); ?>

@@ -241,11 +241,11 @@ function record_post_view(int $postId): void
 
 function post_stats(int $postId, ?int $memberId = null): array
 {
-    $stmt = db()->prepare('SELECT (SELECT COUNT(*) FROM post_views WHERE post_id = ?) views, SUM(reaction = 1) likes, SUM(reaction = -1) dislikes FROM post_reactions WHERE post_id = ?');
-    $stmt->execute([$postId, $postId]); $stats = $stmt->fetch() ?: [];
+    $stmt = db()->prepare('SELECT (SELECT COUNT(*) FROM post_views WHERE post_id = ?) views,(SELECT COUNT(*) FROM post_shares WHERE post_id = ?) shares,SUM(reaction = 1) likes,SUM(reaction = -1) dislikes FROM post_reactions WHERE post_id = ?');
+    $stmt->execute([$postId,$postId,$postId]); $stats = $stmt->fetch() ?: [];
     $reaction = 0;
     if ($memberId) { $stmt = db()->prepare('SELECT reaction FROM post_reactions WHERE post_id = ? AND member_id = ?'); $stmt->execute([$postId, $memberId]); $reaction = (int)($stmt->fetchColumn() ?: 0); }
-    return ['views' => (int)($stats['views'] ?? 0), 'likes' => (int)($stats['likes'] ?? 0), 'dislikes' => (int)($stats['dislikes'] ?? 0), 'reaction' => $reaction];
+    return ['views'=>(int)($stats['views']??0),'shares'=>(int)($stats['shares']??0),'likes'=>(int)($stats['likes']??0),'dislikes'=>(int)($stats['dislikes']??0),'reaction'=>$reaction];
 }
 
 function login_throttle_seconds(): int
