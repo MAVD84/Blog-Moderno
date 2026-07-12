@@ -293,6 +293,7 @@ function render_header(string $title, array $metadata = []): void
     $messages = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
     $styleVersion = (string) (@filemtime(__DIR__ . '/assets/style.css') ?: '1');
+    $menuVersion = (string) (@filemtime(__DIR__ . '/assets/menu.js') ?: '1');
     $siteName = site_setting('site_name');
     $pageTitle = $metadata['title'] ?? ($title === 'Inicio' ? site_setting('site_title') . ' · ' . $siteName : $title . ' · ' . $siteName);
     $description = $metadata['description'] ?? site_setting('site_description');
@@ -328,10 +329,12 @@ function render_header(string $title, array $metadata = []): void
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
 <?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => $metadata['author'] ?? 'Administrador'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url(site_setting('favicon_image'))]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
 <link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
-<nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a><div><?php if (is_logged_in()): ?>
-<a href="admin.php">Escribir</a><?php if (is_admin()): ?><a href="comments.php">Comentarios</a><a href="users.php">Usuarios</a><a href="security.php">Seguridad</a><a href="settings.php">Configuración</a><?php endif; ?>
-<form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form>
-<?php endif; ?></div></nav>
+<nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a><?php if (is_logged_in()): ?>
+<button class="menu-toggle" type="button" aria-label="Abrir menú" aria-controls="site-menu" aria-expanded="false"><span></span><span></span><span></span></button>
+<div class="menu-overlay" data-menu-close></div><div class="nav-menu" id="site-menu"><div class="menu-header"><strong>Menú</strong><button type="button" class="menu-close" data-menu-close aria-label="Cerrar menú">×</button></div>
+<a href="index.php">Inicio</a><a href="admin.php">Escribir</a><?php if (is_admin()): ?><a href="comments.php">Comentarios</a><a href="users.php">Usuarios</a><a href="security.php">Seguridad</a><a href="settings.php">Configuración</a><?php endif; ?>
+<form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form></div>
+<?php endif; ?></nav><script src="/assets/menu.js?v=<?= e($menuVersion) ?>" defer></script>
 <main><?php foreach ($messages as [$type, $message]): ?><div class="flash <?= e($type) ?>"><?= e($message) ?></div><?php endforeach; ?>
 <?php
 }

@@ -19,7 +19,7 @@ nav {
   background: rgba(255,255,255,.96); border-bottom: 1px solid rgba(228,231,236,.9);
   box-shadow: 0 2px 12px rgba(16,24,40,.04); position: sticky; top: 0; z-index: 20;
 }
-nav > div { display: flex; align-items: center; justify-content: flex-end; gap: 20px; }
+.nav-menu { display: flex; align-items: center; justify-content: flex-end; gap: 20px; }
 nav a:not(.brand), .link { color: #475467; font-size: .94rem; font-weight: 600; }
 nav a:hover, .link:hover { color: var(--primary); }
 .brand { color: var(--primary); font-size: 1.55rem; font-weight: 850; letter-spacing: -.04em; }
@@ -27,6 +27,7 @@ nav a:hover, .link:hover { color: var(--primary); }
 .inline { display: inline-flex; margin: 0; }
 .link { padding: 0; border: 0; background: none; cursor: pointer; }
 .danger { color: var(--danger) !important; }
+.menu-toggle, .menu-close, .menu-overlay, .menu-header { display: none; }
 
 main { width: min(1040px, calc(100% - 32px)); min-height: calc(100vh - 160px); margin: 36px auto 64px; }
 footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var(--surface); border-top: 1px solid var(--line); }
@@ -161,8 +162,22 @@ legend { padding: 0 8px; color: var(--primary); font-weight: 800; }
 
 @media (max-width: 760px) {
   nav { min-height: 60px; padding: 10px 16px; }
-  nav > div { gap: 12px; }
   nav a:not(.brand), .link { font-size: .86rem; }
+  .menu-toggle { width: 44px; height: 44px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; }
+  .menu-toggle span { width: 20px; height: 2px; border-radius: 2px; background: #344054; transition: transform .2s ease, opacity .2s ease; }
+  .menu-open .menu-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-open .menu-toggle span:nth-child(2) { opacity: 0; }
+  .menu-open .menu-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .menu-overlay { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(16,24,40,.55); opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility .25s ease; }
+  .nav-menu { width: min(86vw,340px); height: 100dvh; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 4px; padding: 18px; position: fixed; top: 0; right: 0; z-index: 50; background: #fff; box-shadow: -18px 0 50px rgba(16,24,40,.18); transform: translateX(105%); transition: transform .25s ease; overflow-y: auto; }
+  .menu-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); font-size: 1.1rem; }
+  .menu-close { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 9px; background: #f2f4f7; color: #344054; font-size: 1.7rem; cursor: pointer; }
+  .nav-menu > a, .nav-menu > form .link { width: 100%; min-height: 46px; display: flex; align-items: center; padding: 10px 12px; border-radius: 9px; font-size: .96rem !important; }
+  .nav-menu > a:hover, .nav-menu > form .link:hover { background: #f5f3ff; }
+  .nav-menu > form { width: 100%; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
+  .menu-open { overflow: hidden; }
+  .menu-open .menu-overlay { opacity: 1; visibility: visible; }
+  .menu-open .nav-menu { transform: translateX(0); }
   main { width: min(100% - 20px,1040px); margin: 18px auto 40px; }
   .grid, .columns, .settings-grid, .users-layout { grid-template-columns: 1fr; gap: 16px; }
   .pad, .article-body, .panel { padding: 20px; }
@@ -172,8 +187,7 @@ legend { padding: 0 8px; color: var(--primary); font-weight: 800; }
   .editor-toolbar button { min-height: 38px; }
 }
 @media (max-width: 480px) {
-  nav { align-items: flex-start; }
-  nav > div { gap: 8px 12px; flex-wrap: wrap; }
+  nav { align-items: center; }
   .brand { font-size: 1.35rem; }
   .article h1 { font-size: 1.85rem; }
   .actions, .actions form, .actions .button { width: 100%; }
