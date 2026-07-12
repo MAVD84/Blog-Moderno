@@ -146,6 +146,7 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .verified { color:var(--success); font-weight:750; }
 .post-stats { display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin-top:18px; color:var(--muted); font-weight:650; }
 .post-stats form { display:flex; gap:8px; }
+.stat-pill { display:inline-flex; align-items:center; justify-content:center; min-height:38px; text-decoration:none; }
 .reaction { padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; cursor:pointer; }
 .reaction.active { border-color:var(--primary); color:var(--primary); background:var(--primary-soft); }
 .secondary { color:var(--primary); background:var(--primary-soft); }
