@@ -27,7 +27,7 @@ $renderComments = function (int $parentId = 0, int $depth = 0) use (&$renderComm
 };
 $plainContent = trim(preg_replace('/\s+/', ' ', strip_tags($post['contenido'])) ?? '');
 $description = mb_strimwidth($plainContent, 0, 200, '…');
-$socialImage = $post['imagen'] ? '/uploads/' . rawurlencode($post['imagen']) : '/assets/og-image.png';
+$socialImage = $post['imagen'] ? '/uploads/' . rawurlencode($post['imagen']) : site_setting('og_image');
 render_header($post['titulo'], [
     'description' => $description,
     'canonical' => post_url($post),

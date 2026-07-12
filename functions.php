@@ -76,13 +76,13 @@ function site_settings(): array
     static $settings = null;
     if (is_array($settings)) { return $settings; }
     $settings = [
-        'site_name' => 'Blog.',
-        'site_title' => 'Polygon Blockchain',
-        'site_tagline' => 'Documentando el camino',
-        'site_description' => 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.',
-        'footer_text' => 'Blog Personal.',
-        'og_image' => '/assets/og-image.png',
-        'favicon_image' => '/assets/favicon.png',
+        'site_name' => 'Mi sitio',
+        'site_title' => 'Mi sitio',
+        'site_tagline' => '',
+        'site_description' => '',
+        'footer_text' => 'Mi sitio',
+        'og_image' => '',
+        'favicon_image' => '',
         'logo_image' => '',
     ];
     try {
@@ -388,40 +388,44 @@ function render_header(string $title, array $metadata = []): void
     $description = $metadata['description'] ?? site_setting('site_description');
     $canonical = absolute_url($metadata['canonical'] ?? (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/'));
     $socialImagePath = $metadata['image'] ?? site_setting('og_image');
-    $socialImage = absolute_url($socialImagePath);
+    $socialImage = $socialImagePath !== '' ? absolute_url($socialImagePath) : '';
     $type = $metadata['type'] ?? 'website';
     $localImage = __DIR__ . '/' . ltrim((string)(parse_url($socialImagePath, PHP_URL_PATH) ?: ''), '/');
     $detectedSize = is_file($localImage) ? @getimagesize($localImage) : false;
     $imageWidth = (int)($metadata['image_width'] ?? ($detectedSize[0] ?? 1320));
     $imageHeight = (int)($metadata['image_height'] ?? ($detectedSize[1] ?? 682));
+    $articleSchema = ['@context'=>'https://schema.org','@type'=>'BlogPosting','headline'=>$title,'mainEntityOfPage'=>$canonical,'author'=>['@type'=>'Person','name'=>$metadata['author']??'Administrador'],'publisher'=>['@type'=>'Organization','name'=>$siteName]];
+    if ($description !== '') { $articleSchema['description'] = $description; }
+    if ($socialImage !== '') { $articleSchema['image'] = [$socialImage]; }
+    if (!empty($metadata['published_time'])) { $articleSchema['datePublished'] = $metadata['published_time']; }
+    if (site_setting('favicon_image') !== '') { $articleSchema['publisher']['logo'] = ['@type'=>'ImageObject','url'=>absolute_url(site_setting('favicon_image'))]; }
     ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?= e($pageTitle) ?></title>
-<meta name="description" content="<?= e($description) ?>">
+<?php if ($description !== ''): ?><meta name="description" content="<?= e($description) ?>"><?php endif; ?>
 <meta name="robots" content="<?= e($metadata['robots'] ?? 'index,follow,max-image-preview:large') ?>">
 <link rel="canonical" href="<?= e($canonical) ?>">
-<link rel="icon" href="<?= e(site_setting('favicon_image')) ?>">
-<link rel="apple-touch-icon" href="<?= e(site_setting('favicon_image')) ?>">
+<?php if (site_setting('favicon_image') !== ''): ?><link rel="icon" href="<?= e(site_setting('favicon_image')) ?>"><link rel="apple-touch-icon" href="<?= e(site_setting('favicon_image')) ?>"><?php endif; ?>
 <meta property="og:locale" content="es_MX">
 <meta property="og:site_name" content="<?= e($siteName) ?>">
 <meta property="og:type" content="<?= e($type) ?>">
 <meta property="og:title" content="<?= e($pageTitle) ?>">
-<meta property="og:description" content="<?= e($description) ?>">
+<?php if ($description !== ''): ?><meta property="og:description" content="<?= e($description) ?>"><?php endif; ?>
 <meta property="og:url" content="<?= e($canonical) ?>">
-<meta property="og:image" content="<?= e($socialImage) ?>">
+<?php if ($socialImage !== ''): ?><meta property="og:image" content="<?= e($socialImage) ?>">
 <meta property="og:image:alt" content="<?= e($metadata['image_alt'] ?? $pageTitle) ?>">
-<meta property="og:image:width" content="<?= $imageWidth ?>"><meta property="og:image:height" content="<?= $imageHeight ?>">
-<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image:width" content="<?= $imageWidth ?>"><meta property="og:image:height" content="<?= $imageHeight ?>"><?php endif; ?>
+<meta name="twitter:card" content="<?= $socialImage !== '' ? 'summary_large_image' : 'summary' ?>">
 <meta name="twitter:title" content="<?= e($pageTitle) ?>">
-<meta name="twitter:description" content="<?= e($description) ?>">
-<meta name="twitter:image" content="<?= e($socialImage) ?>">
+<?php if ($description !== ''): ?><meta name="twitter:description" content="<?= e($description) ?>"><?php endif; ?>
+<?php if ($socialImage !== ''): ?><meta name="twitter:image" content="<?= e($socialImage) ?>"><?php endif; ?>
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
-<?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => $metadata['author'] ?? 'Administrador'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url(site_setting('favicon_image'))]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
+<?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
 <link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
 <nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a>
 <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-controls="site-menu" aria-expanded="false"><span></span><span></span><span></span></button>
 <div class="menu-overlay" data-menu-close></div><div class="nav-menu" id="site-menu"><div class="menu-header"><strong>Menú</strong><button type="button" class="menu-close" data-menu-close aria-label="Cerrar menú">×</button></div>
-<a href="/index.php">Inicio</a><a href="/community.php">Comunidad</a><?php if (is_logged_in()): ?><a href="/admin.php">Escribir</a><?php if (is_admin()): ?><a href="/community-moderation.php">Publicaciones</a><a href="/comments.php">Comentarios</a><a href="/users.php">Usuarios</a><a href="/members.php">Lectores</a><a href="/security.php">Seguridad</a><a href="/settings.php">Configuración</a><?php endif; ?><form class="inline" method="post" action="/logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir del panel</button></form><?php elseif (is_member_logged_in()): ?><a href="/community-write.php">Publicar</a><a href="/member-posts.php">Mis publicaciones</a><a href="/my-comments.php">Respuestas</a><a href="/profile.php">Mi perfil</a><form class="inline" method="post" action="/member-logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form><?php else: ?><a href="/member-login.php">Acceder</a><a href="/register.php">Registrarse</a><?php endif; ?></div>
+<a href="/index.php">Inicio</a><a href="/community.php">Comunidad</a><?php if (is_logged_in()): ?><a href="/admin.php">Escribir</a><?php if (is_admin()): ?><a href="/community-moderation.php">Publicaciones</a><a href="/comments.php">Comentarios</a><a href="/users.php">Usuarios</a><a href="/members.php">Lectores</a><a href="/security.php">Seguridad</a><a href="/settings.php">Configuración</a><?php endif; ?><a href="/account.php">Mi cuenta</a><form class="inline" method="post" action="/logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir del panel</button></form><?php elseif (is_member_logged_in()): ?><a href="/community-write.php">Publicar</a><a href="/member-posts.php">Mis publicaciones</a><a href="/my-comments.php">Respuestas</a><a href="/profile.php">Mi perfil</a><form class="inline" method="post" action="/member-logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form><?php else: ?><a href="/member-login.php">Acceder</a><a href="/register.php">Registrarse</a><?php endif; ?></div>
 </nav><script src="/assets/menu.js?v=<?= e($menuVersion) ?>" defer></script>
 <main><?php foreach ($messages as [$type, $message]): ?><div class="flash <?= e($type) ?>"><?= e($message) ?></div><?php endforeach; ?>
 <?php

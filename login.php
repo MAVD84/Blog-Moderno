@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!str_contains($error->getMessage(), 'users')) { throw $error; }
     }
     $valid = $account && password_verify($password, $account['password_hash']);
-    if (!$valid) {
+    if (!$valid && !$account) {
         $envUser = getenv('ADMIN_USER') ?: '';
         $hash = getenv('ADMIN_PASSWORD_HASH') ?: '';
         $plainPassword = getenv('ADMIN_PASSWORD') ?: '';

@@ -49,10 +49,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         $settings = [
             'site_name' => $fields['site_name'], 'site_title' => $fields['site_title'],
-            'site_tagline' => 'Documentando el camino',
-            'site_description' => 'Artículos, análisis y aprendizaje sobre Polygon, Ethereum y tecnología blockchain.',
-            'footer_text' => $fields['site_name'], 'og_image' => '/assets/og-image.png',
-            'favicon_image' => '/assets/favicon.png', 'logo_image' => '',
+            'site_tagline' => '', 'site_description' => '',
+            'footer_text' => $fields['site_name'], 'og_image' => '',
+            'favicon_image' => '', 'logo_image' => '',
         ];
         $stmt = $pdo->prepare('INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
         foreach ($settings as $key => $value) { $stmt->execute([$key, $value]); }
@@ -97,7 +96,7 @@ $defaultUrl = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'tudominio.com');
 <form method="post"><input type="hidden" name="csrf_token" value="<?= installer_e($_SESSION['install_csrf']) ?>">
 <fieldset><legend>Base de datos MySQL</legend><div class="settings-grid"><label>Servidor<input name="db_host" value="<?= installer_e($_POST['db_host'] ?? 'localhost') ?>" required></label><label>Puerto<input name="db_port" inputmode="numeric" value="<?= installer_e($_POST['db_port'] ?? '3306') ?>" required></label><label>Base de datos<input name="db_name" value="<?= installer_e($_POST['db_name'] ?? '') ?>" required></label><label>Usuario MySQL<input name="db_user" value="<?= installer_e($_POST['db_user'] ?? '') ?>" required></label></div><label>Contraseña MySQL<input type="password" name="db_password" required></label></fieldset>
 <fieldset><legend>Administrador</legend><div class="settings-grid"><label>Usuario<input name="admin_user" value="<?= installer_e($_POST['admin_user'] ?? 'admin') ?>" required></label><span></span><label>Contraseña<input type="password" name="admin_password" minlength="12" required></label><label>Confirmar contraseña<input type="password" name="admin_confirm" minlength="12" required></label></div></fieldset>
-<fieldset><legend>Identidad del sitio</legend><label>URL HTTPS<input type="url" name="site_url" value="<?= installer_e($_POST['site_url'] ?? $defaultUrl) ?>" required></label><div class="settings-grid"><label>Nombre del sitio<input name="site_name" maxlength="50" value="<?= installer_e($_POST['site_name'] ?? 'Blog.') ?>" required></label><label>Título principal<input name="site_title" maxlength="120" value="<?= installer_e($_POST['site_title'] ?? 'Polygon Blockchain') ?>" required></label></div></fieldset>
+<fieldset><legend>Identidad del sitio</legend><p class="muted">La instalación comenzará sin logo, favicon, imagen social, descripción ni textos SEO. Podrás agregarlos después desde Configuración.</p><label>URL HTTPS<input type="url" name="site_url" value="<?= installer_e($_POST['site_url'] ?? $defaultUrl) ?>" required></label><div class="settings-grid"><label>Nombre del sitio<input name="site_name" maxlength="50" value="<?= installer_e($_POST['site_name'] ?? '') ?>" placeholder="Mi sitio" required></label><label>Título principal<input name="site_title" maxlength="120" value="<?= installer_e($_POST['site_title'] ?? '') ?>" placeholder="Título de la portada" required></label></div></fieldset>
 <fieldset><legend>Correo de verificación</legend><p class="muted">Datos del buzón que enviará verificaciones y recuperaciones.</p><div class="settings-grid"><label>Servidor SMTP<input name="smtp_host" value="<?= installer_e($_POST['smtp_host'] ?? 'smtp.jrz.wtf') ?>" required></label><label>Puerto SSL<input name="smtp_port" inputmode="numeric" value="<?= installer_e($_POST['smtp_port'] ?? '465') ?>" required></label><label>Usuario SMTP<input type="email" name="smtp_username" value="<?= installer_e($_POST['smtp_username'] ?? 'no-reply@jrz.wtf') ?>" required></label><label>Contraseña del correo<input type="password" name="smtp_password" required></label></div></fieldset>
 <button class="button installer-submit" type="submit" <?= in_array(false, $requirements, true) ? 'disabled' : '' ?>>Instalar sitio</button></form>
 <?php endif; ?></div></main></body></html>
