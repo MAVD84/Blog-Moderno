@@ -77,6 +77,21 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .comment:last-child { border-bottom: 0; }
 .comment small { float: right; color: #98a2b3; }
 .comment p { margin-bottom: 0; }
+.comment-author { display:flex; align-items:center; gap:10px; }
+.comment-author small { margin-left:auto; }
+.avatar { width:38px; height:38px; flex:0 0 auto; border-radius:50%; object-fit:cover; background:#eef2ff; }
+.avatar-lg { width:82px; height:82px; font-size:2rem; }
+.avatar-fallback { display:inline-flex; align-items:center; justify-content:center; color:var(--primary); font-weight:850; }
+.profile-head { display:flex; align-items:center; gap:18px; }
+.profile-head h1,.profile-head p { margin:0; }
+.verification-box { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0; padding:16px; border-radius:10px; background:#fff7ed; }
+.verified { color:var(--success); font-weight:750; }
+.post-stats { display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin-top:18px; color:var(--muted); font-weight:650; }
+.post-stats form { display:flex; gap:8px; }
+.reaction { padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; cursor:pointer; }
+.reaction.active { border-color:var(--primary); color:var(--primary); background:#eef2ff; }
+.secondary { color:var(--primary); background:#eef2ff; }
+.text-link { color:var(--primary); text-decoration:underline; }
 
 label, .field-label { display: block; margin: 20px 0 7px; color: #344054; font-size: .92rem; font-weight: 700; }
 input, textarea { width: 100%; max-width: 100%; padding: 12px 14px; border: 1px solid #d0d5dd; border-radius: 9px; background: #fff; color: var(--text); transition: border-color .15s ease, box-shadow .15s ease; }
@@ -197,4 +212,5 @@ legend { padding: 0 8px; color: var(--primary); font-weight: 800; }
   .editor-status span:first-child { display: none; }
   .editor-status { justify-content: flex-end; }
   .moderation-title, .moderation-meta { align-items: flex-start; flex-direction: column; }
+  .verification-box { align-items:stretch; flex-direction:column; }
 }

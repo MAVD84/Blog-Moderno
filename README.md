@@ -58,6 +58,12 @@ php -S localhost:8000
 
 Los visitantes envían comentarios desde cada artículo. El correo es privado y el comentario permanece oculto hasta que el administrador lo aprueba en `comments.php`.
 
+## Lectores, correo y reacciones
+
+Ejecuta `migrations/006_members_reactions.sql` en phpMyAdmin. Los lectores se registran, verifican su correo y entonces pueden comentar, dar like o dislike y subir un avatar. Las vistas cuentan una vez por visitante y día. Los comentarios siguen sujetos a aprobación.
+
+Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
+
 ## Despliegue
 
 Usa un hosting compatible con PHP y MySQL, como cPanel, Hostinger, Railway, Render mediante contenedor o un VPS. Vercel no ejecuta esta aplicación PHP de forma nativa.

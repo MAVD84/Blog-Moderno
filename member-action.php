@@ -1,0 +1,2 @@
+<?php
+require_once __DIR__.'/functions.php';require_admin();if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);exit;}verify_csrf();$id=filter_input(INPUT_POST,'member_id',FILTER_VALIDATE_INT);$active=($_POST['action']??'')==='activate'?1:0;if(!$id){http_response_code(400);exit;}db()->prepare('UPDATE members SET active=? WHERE id=?')->execute([$active,$id]);flash($active?'Lector activado.':'Lector suspendido.');redirect('/members.php');

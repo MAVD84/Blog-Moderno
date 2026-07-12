@@ -1,0 +1,8 @@
+{
+    "name": "mavd84/blog-moderno",
+    "description": "Blog moderno en PHP y MySQL",
+    "license": "MIT",
+    "require": {
+        "phpmailer/phpmailer": "^7.0"
+    }
+}

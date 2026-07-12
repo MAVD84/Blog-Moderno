@@ -15,7 +15,7 @@ render_header('Seguridad', ['robots' => 'noindex,nofollow']);
 <div class="panel">
     <div class="moderation-title"><div><h1>Registro de seguridad</h1><p class="muted">Últimos 100 intentos de acceso. Las direcciones IP no se guardan en claro.</p></div><span class="count-badge"><?= $failed24h ?> fallo<?= $failed24h === 1 ? '' : 's' ?> / 24 h</span></div>
     <div class="security-table-wrap"><table class="security-table"><thead><tr><th>Fecha</th><th>Origen protegido</th><th>Resultado</th></tr></thead><tbody>
-    <?php foreach ($attempts as $attempt): ?><tr><td><?= e($attempt['attempted_at']) ?></td><td><code><?= e($attempt['source']) ?>…</code></td><td><span class="status-badge <?= $attempt['successful'] ? 'approved' : 'pending' ?>"><?= $attempt['successful'] ? 'Correcto' : 'Fallido' ?></span></td></tr><?php endforeach; ?>
+    <?php foreach ($attempts as $attempt): ?><tr><td><?= e(format_date($attempt['attempted_at'], true)) ?></td><td><code><?= e($attempt['source']) ?>…</code></td><td><span class="status-badge <?= $attempt['successful'] ? 'approved' : 'pending' ?>"><?= $attempt['successful'] ? 'Correcto' : 'Fallido' ?></span></td></tr><?php endforeach; ?>
     <?php if (!$attempts): ?><tr><td colspan="3" class="empty">Todavía no hay intentos registrados.</td></tr><?php endif; ?>
     </tbody></table></div>
 </div>

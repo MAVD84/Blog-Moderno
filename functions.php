@@ -6,6 +6,12 @@ const UPLOAD_DIR = __DIR__ . '/uploads';
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 function e(?string $value): string { return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+function format_date(?string $value, bool $includeTime = false): string
+{
+    if (!$value) { return ''; }
+    try { return (new DateTime($value))->format($includeTime ? 'd/m/Y h:i A' : 'd/m/Y'); }
+    catch (Exception) { return $value; }
+}
 function is_logged_in(): bool
 {
     if (($_SESSION['authenticated'] ?? $_SESSION['admin'] ?? false) !== true) { return false; }
@@ -25,6 +31,27 @@ function current_author_name(): string
     return (string)$name;
 }
 function can_edit_post(array $post): bool { return is_admin() || (is_logged_in() && current_user_id() && (int)($post['author_id'] ?? 0) === current_user_id()); }
+function current_member(): ?array
+{
+    static $member = false;
+    if ($member !== false) { return $member ?: null; }
+    $id = (int)($_SESSION['member_id'] ?? 0);
+    if (!$id) { $member = null; return null; }
+    $stmt = db()->prepare('SELECT * FROM members WHERE id = ? AND active = 1');
+    $stmt->execute([$id]);
+    $member = $stmt->fetch() ?: null;
+    if (!$member) { unset($_SESSION['member_id']); }
+    return $member;
+}
+function is_member_logged_in(): bool { return current_member() !== null; }
+function is_member_verified(): bool { return !empty(current_member()['email_verified_at']); }
+function require_member(bool $verified = true): array
+{
+    $member = current_member();
+    if (!$member) { flash('Inicia sesión para continuar.', 'error'); redirect('/member-login.php'); }
+    if ($verified && empty($member['email_verified_at'])) { flash('Primero verifica tu correo electrónico.', 'error'); redirect('/profile.php'); }
+    return $member;
+}
 function redirect(string $url): never { header("Location: {$url}"); exit; }
 function post_url(array $post): string { return '/' . rawurlencode($post['slug']); }
 
@@ -145,6 +172,67 @@ function login_ip_hash(): string
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $key = getenv('APP_SECRET') ?: env_required('DB_PASSWORD');
     return hash_hmac('sha256', $ip, $key);
+}
+
+function visitor_hash(string $scope = 'visitor'): string
+{
+    $source = ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . '|' . ($_SERVER['HTTP_USER_AGENT'] ?? 'unknown');
+    return hash_hmac('sha256', $scope . '|' . $source, getenv('APP_SECRET') ?: env_required('DB_PASSWORD'));
+}
+
+function create_member_token(int $memberId, string $type, int $hours): string
+{
+    $raw = bin2hex(random_bytes(32));
+    $pdo = db();
+    $pdo->prepare('DELETE FROM member_tokens WHERE member_id = ? AND token_type = ?')->execute([$memberId, $type]);
+    $expires = (new DateTimeImmutable("+{$hours} hours"))->format('Y-m-d H:i:s');
+    $pdo->prepare('INSERT INTO member_tokens (member_id, token_hash, token_type, expires_at) VALUES (?, ?, ?, ?)')
+        ->execute([$memberId, hash('sha256', $raw), $type, $expires]);
+    return $raw;
+}
+
+function consume_member_token(string $raw, string $type): ?int
+{
+    if (!preg_match('/^[a-f0-9]{64}$/', $raw)) { return null; }
+    $pdo = db();
+    $stmt = $pdo->prepare('SELECT id, member_id FROM member_tokens WHERE token_hash = ? AND token_type = ? AND used_at IS NULL AND expires_at > NOW()');
+    $stmt->execute([hash('sha256', $raw), $type]); $token = $stmt->fetch();
+    if (!$token) { return null; }
+    $pdo->prepare('UPDATE member_tokens SET used_at = NOW() WHERE id = ?')->execute([$token['id']]);
+    return (int)$token['member_id'];
+}
+
+function member_auth_allowed(string $action): bool
+{
+    $stmt = db()->prepare('SELECT COUNT(*) FROM member_auth_attempts WHERE ip_hash = ? AND action_name = ? AND attempted_at > NOW() - INTERVAL 15 MINUTE');
+    $stmt->execute([visitor_hash('member-auth'), $action]);
+    return (int)$stmt->fetchColumn() < 10;
+}
+function record_member_auth(string $action): void
+{
+    db()->prepare('INSERT INTO member_auth_attempts (ip_hash, action_name) VALUES (?, ?)')->execute([visitor_hash('member-auth'), $action]);
+}
+
+function upload_avatar(array $file): ?string
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) { return null; }
+    if (($file['size'] ?? 0) > 2 * 1024 * 1024) { throw new RuntimeException('El avatar no puede superar 2 MB.'); }
+    return upload_image($file);
+}
+
+function record_post_view(int $postId): void
+{
+    $stmt = db()->prepare('INSERT IGNORE INTO post_views (post_id, visitor_hash, viewed_on) VALUES (?, ?, CURRENT_DATE)');
+    $stmt->execute([$postId, visitor_hash('post-view')]);
+}
+
+function post_stats(int $postId, ?int $memberId = null): array
+{
+    $stmt = db()->prepare('SELECT (SELECT COUNT(*) FROM post_views WHERE post_id = ?) views, SUM(reaction = 1) likes, SUM(reaction = -1) dislikes FROM post_reactions WHERE post_id = ?');
+    $stmt->execute([$postId, $postId]); $stats = $stmt->fetch() ?: [];
+    $reaction = 0;
+    if ($memberId) { $stmt = db()->prepare('SELECT reaction FROM post_reactions WHERE post_id = ? AND member_id = ?'); $stmt->execute([$postId, $memberId]); $reaction = (int)($stmt->fetchColumn() ?: 0); }
+    return ['views' => (int)($stats['views'] ?? 0), 'likes' => (int)($stats['likes'] ?? 0), 'dislikes' => (int)($stats['dislikes'] ?? 0), 'reaction' => $reaction];
 }
 
 function login_throttle_seconds(): int
@@ -329,12 +417,11 @@ function render_header(string $title, array $metadata = []): void
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
 <?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $title, 'description' => $description, 'image' => [$socialImage], 'datePublished' => $metadata['published_time'] ?? null, 'mainEntityOfPage' => $canonical, 'author' => ['@type' => 'Person', 'name' => $metadata['author'] ?? 'Administrador'], 'publisher' => ['@type' => 'Organization', 'name' => $siteName, 'logo' => ['@type' => 'ImageObject', 'url' => absolute_url(site_setting('favicon_image'))]]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
 <link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"></head><body>
-<nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a><?php if (is_logged_in()): ?>
+<nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a>
 <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-controls="site-menu" aria-expanded="false"><span></span><span></span><span></span></button>
 <div class="menu-overlay" data-menu-close></div><div class="nav-menu" id="site-menu"><div class="menu-header"><strong>Menú</strong><button type="button" class="menu-close" data-menu-close aria-label="Cerrar menú">×</button></div>
-<a href="index.php">Inicio</a><a href="admin.php">Escribir</a><?php if (is_admin()): ?><a href="comments.php">Comentarios</a><a href="users.php">Usuarios</a><a href="security.php">Seguridad</a><a href="settings.php">Configuración</a><?php endif; ?>
-<form class="inline" method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form></div>
-<?php endif; ?></nav><script src="/assets/menu.js?v=<?= e($menuVersion) ?>" defer></script>
+<a href="/index.php">Inicio</a><?php if (is_logged_in()): ?><a href="/admin.php">Escribir</a><?php if (is_admin()): ?><a href="/comments.php">Comentarios</a><a href="/users.php">Usuarios</a><a href="/members.php">Lectores</a><a href="/security.php">Seguridad</a><a href="/settings.php">Configuración</a><?php endif; ?><form class="inline" method="post" action="/logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir del panel</button></form><?php elseif (is_member_logged_in()): ?><a href="/profile.php">Mi perfil</a><form class="inline" method="post" action="/member-logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form><?php else: ?><a href="/member-login.php">Acceder</a><a href="/register.php">Registrarse</a><?php endif; ?></div>
+</nav><script src="/assets/menu.js?v=<?= e($menuVersion) ?>" defer></script>
 <main><?php foreach ($messages as [$type, $message]): ?><div class="flash <?= e($type) ?>"><?= e($message) ?></div><?php endforeach; ?>
 <?php
 }

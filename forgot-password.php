@@ -1,0 +1,4 @@
+<?php
+require_once __DIR__ . '/functions.php'; require_once __DIR__ . '/mail.php';
+if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();if(member_auth_allowed('reset')){record_member_auth('reset');$stmt=db()->prepare('SELECT * FROM members WHERE email=? AND active=1');$stmt->execute([strtolower(trim((string)($_POST['email']??'')))]);if($m=$stmt->fetch()){try{send_reset_email($m);}catch(Throwable $e){error_log($e->getMessage());}}}flash('Si el correo existe, recibirás un enlace en unos minutos.');}
+render_header('Recuperar contraseña',['robots'=>'noindex,nofollow']);?><section class="panel narrow"><h1>Recuperar contraseña</h1><form method="post"><input type="hidden" name="csrf_token" value="<?=csrf_token()?>"><label>Correo electrónico<input type="email" name="email" required></label><button class="button">Enviar enlace</button></form></section><?php render_footer();
