@@ -134,6 +134,7 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .profile-bio { max-width:720px; margin:24px 0; color:#344054; }
 .profile-social { display:flex; align-items:center; flex-wrap:wrap; gap:18px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); }
 .profile-social form { margin-left:auto; }
+.profile-share-button { padding:10px 14px; }
 .profile-posts { margin-top:20px; }
 .avatar-fallback { display:inline-flex; align-items:center; justify-content:center; color:var(--primary); font-weight:850; }
 .profile-head { display:flex; align-items:flex-start; gap:22px; margin-bottom:24px; }

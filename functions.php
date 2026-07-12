@@ -32,15 +32,15 @@ function current_author_name(): string
 }
 function can_edit_post(array $post): bool { return is_admin() || (is_logged_in() && current_user_id() && (int)($post['author_id'] ?? 0) === current_user_id()); }
 function can_member_edit_post(array $post): bool { $member=current_member(); return $member && (int)($post['member_author_id']??0)===(int)$member['id']; }
-function unique_member_slug(string $name): string
+function unique_member_slug(string $name,?int $excludeId=null): string
 {
     $base=slugify($name);$slug=$base;$suffix=2;
-    while(true){$stmt=db()->prepare('SELECT 1 FROM members WHERE profile_slug=? LIMIT 1');$stmt->execute([$slug]);if(!$stmt->fetchColumn())return $slug;$slug=substr($base,0,175).'-'.$suffix++;}
+    while(true){$sql='SELECT 1 FROM members WHERE profile_slug=?'.($excludeId?' AND id<>?':'').' LIMIT 1';$stmt=db()->prepare($sql);$stmt->execute($excludeId?[$slug,$excludeId]:[$slug]);if(!$stmt->fetchColumn())return $slug;$slug=substr($base,0,175).'-'.$suffix++;}
 }
 function public_profile_url(array $member): ?string { return !empty($member['profile_public'])&&!empty($member['profile_slug'])?'/usuario/'.rawurlencode($member['profile_slug']):null; }
 function public_author_url(array $user): ?string { return !empty($user['profile_public'])&&!empty($user['profile_slug'])?'/autor/'.rawurlencode($user['profile_slug']):null; }
-function current_staff_profile(): ?array { $id=current_user_id();if(!$id)return null;$stmt=db()->prepare('SELECT * FROM users WHERE id=? AND active=1');$stmt->execute([$id]);return $stmt->fetch()?:null; }
-function unique_staff_slug(string $name): string { $base=slugify($name);$slug=$base;$n=2;while(true){$stmt=db()->prepare('SELECT 1 FROM users WHERE profile_slug=?');$stmt->execute([$slug]);if(!$stmt->fetchColumn())return $slug;$slug=substr($base,0,175).'-'.$n++;} }
+function current_staff_profile(): ?array { $id=current_user_id();if(!$id)return null;$stmt=db()->prepare('SELECT * FROM users WHERE id=? AND active=1');$stmt->execute([$id]);$user=$stmt->fetch()?:null;if($user&&preg_match('/^autor-\d+$/',$user['profile_slug'])){$user['profile_slug']=unique_staff_slug($user['display_name'],(int)$user['id']);db()->prepare('UPDATE users SET profile_slug=? WHERE id=?')->execute([$user['profile_slug'],$user['id']]);}return $user; }
+function unique_staff_slug(string $name,?int $excludeId=null): string { $base=slugify($name);$slug=$base;$n=2;while(true){$sql='SELECT 1 FROM users WHERE profile_slug=?'.($excludeId?' AND id<>?':'');$stmt=db()->prepare($sql);$stmt->execute($excludeId?[$slug,$excludeId]:[$slug]);if(!$stmt->fetchColumn())return $slug;$slug=substr($base,0,175).'-'.$n++;} }
 function current_member(): ?array
 {
     static $member = false;
