@@ -59,8 +59,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         foreach ($settings as $key => $value) { $stmt->execute([$key, $value]); }
 
         $adminHash = password_hash($fields['admin_password'], PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO users (username, display_name, password_hash, role) VALUES (?, ?, ?, 'admin')");
-        $stmt->execute([$fields['admin_user'], $fields['admin_user'], $adminHash]);
+        $stmt = $pdo->prepare("INSERT INTO users (username, display_name, password_hash, role, profile_slug) VALUES (?, ?, ?, 'admin', ?)");
+        $stmt->execute([$fields['admin_user'], $fields['admin_user'], $adminHash, 'administrador']);
 
         $env = [
             'DB_HOST' => $fields['db_host'], 'DB_PORT' => $fields['db_port'], 'DB_NAME' => $fields['db_name'],

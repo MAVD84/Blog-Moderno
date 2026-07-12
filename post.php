@@ -2,8 +2,8 @@
 require_once __DIR__ . '/functions.php';
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $slug = trim((string)($_GET['slug'] ?? ''));
-if ($slug !== '') { $stmt = db()->prepare('SELECT p.*,m.avatar author_avatar,m.profile_slug author_profile_slug,m.profile_public author_profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id WHERE p.slug=?'); $stmt->execute([$slug]); }
-else { $stmt = db()->prepare('SELECT p.*,m.avatar author_avatar,m.profile_slug author_profile_slug,m.profile_public author_profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id WHERE p.id=?'); $stmt->execute([$id]); }
+if ($slug !== '') { $stmt = db()->prepare('SELECT p.*,COALESCE(m.avatar,u.avatar) author_avatar,COALESCE(m.profile_slug,u.profile_slug) author_profile_slug,COALESCE(m.profile_public,u.profile_public) author_profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id LEFT JOIN users u ON u.id=p.author_id WHERE p.slug=?'); $stmt->execute([$slug]); }
+else { $stmt = db()->prepare('SELECT p.*,COALESCE(m.avatar,u.avatar) author_avatar,COALESCE(m.profile_slug,u.profile_slug) author_profile_slug,COALESCE(m.profile_public,u.profile_public) author_profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id LEFT JOIN users u ON u.id=p.author_id WHERE p.id=?'); $stmt->execute([$id]); }
 $post = $stmt->fetch();
 if (!$post) { http_response_code(404); exit('Artículo no encontrado.'); }
 if (($post['status'] ?? 'published') !== 'published' && !is_logged_in() && !can_member_edit_post($post)) { http_response_code(404); exit('Artículo no encontrado.'); }
@@ -14,7 +14,7 @@ record_post_view($id);
 $member = current_member();
 $stats = post_stats($id, $member ? (int)$member['id'] : null);
 $imageSize = $post['imagen'] ? @getimagesize(UPLOAD_DIR . '/' . $post['imagen']) : false;
-$stmt = db()->prepare('SELECT c.id,c.parent_id,c.nombre,c.contenido,c.fecha,c.member_id,m.avatar,m.profile_slug,m.profile_public,COALESCE(SUM(cr.reaction=1),0) likes,COALESCE(SUM(cr.reaction=-1),0) dislikes,COALESCE(MAX(CASE WHEN cr.member_id=? THEN cr.reaction ELSE 0 END),0) my_reaction FROM comments c LEFT JOIN members m ON m.id=c.member_id LEFT JOIN comment_reactions cr ON cr.comment_id=c.id WHERE c.post_id=? AND c.aprobado=1 GROUP BY c.id,c.parent_id,c.nombre,c.contenido,c.fecha,c.member_id,m.avatar,m.profile_slug,m.profile_public ORDER BY c.fecha');
+$stmt = db()->prepare('SELECT c.id,c.parent_id,c.nombre,c.contenido,c.fecha,c.member_id,c.staff_author_id,COALESCE(m.avatar,u.avatar) avatar,COALESCE(m.profile_slug,u.profile_slug) profile_slug,COALESCE(m.profile_public,u.profile_public) profile_public,COALESCE(SUM(cr.reaction=1),0) likes,COALESCE(SUM(cr.reaction=-1),0) dislikes,COALESCE(MAX(CASE WHEN cr.member_id=? THEN cr.reaction ELSE 0 END),0) my_reaction FROM comments c LEFT JOIN members m ON m.id=c.member_id LEFT JOIN users u ON u.id=c.staff_author_id LEFT JOIN comment_reactions cr ON cr.comment_id=c.id WHERE c.post_id=? AND c.aprobado=1 GROUP BY c.id,c.parent_id,c.nombre,c.contenido,c.fecha,c.member_id,c.staff_author_id,m.avatar,u.avatar,m.profile_slug,u.profile_slug,m.profile_public,u.profile_public ORDER BY c.fecha');
 $stmt->execute([$member ? (int)$member['id'] : 0, $id]); $comments = $stmt->fetchAll();
 $commentsByParent = [];
 foreach ($comments as $comment) { $commentsByParent[(int)($comment['parent_id'] ?? 0)][] = $comment; }

@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(254) NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'editor') NOT NULL DEFAULT 'editor',
+    bio VARCHAR(500) NULL,
+    avatar VARCHAR(255) NULL,
+    profile_slug VARCHAR(190) NOT NULL UNIQUE,
+    profile_public BOOLEAN NOT NULL DEFAULT FALSE,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -21,6 +25,16 @@ CREATE TABLE IF NOT EXISTS members (
     email_verified_at TIMESTAMP NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS user_follows (
+    follower_member_id BIGINT UNSIGNED NOT NULL,
+    followed_user_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_member_id, followed_user_id),
+    CONSTRAINT fk_user_follows_member FOREIGN KEY (follower_member_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_follows_user FOREIGN KEY (followed_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_follows_followed (followed_user_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS member_follows (
@@ -61,9 +75,11 @@ CREATE TABLE IF NOT EXISTS comments (
     fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_aprobacion TIMESTAMP NULL,
     member_id BIGINT UNSIGNED NULL,
+    staff_author_id BIGINT UNSIGNED NULL,
     parent_id BIGINT UNSIGNED NULL,
     CONSTRAINT fk_comments_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     CONSTRAINT fk_comments_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE SET NULL,
+    CONSTRAINT fk_comments_staff_author FOREIGN KEY (staff_author_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT fk_comments_parent FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
     INDEX idx_comments_moderation (post_id, aprobado, fecha)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

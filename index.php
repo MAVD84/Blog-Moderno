@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-$posts = db()->query("SELECT p.id,p.titulo,p.slug,p.contenido,p.imagen,p.author_name,p.fecha,p.post_type,m.avatar,m.profile_slug,m.profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id WHERE p.status='published' ORDER BY p.fecha DESC")->fetchAll();
+$posts = db()->query("SELECT p.id,p.titulo,p.slug,p.contenido,p.imagen,p.author_name,p.fecha,p.post_type,COALESCE(m.avatar,u.avatar) avatar,COALESCE(m.profile_slug,u.profile_slug) profile_slug,COALESCE(m.profile_public,u.profile_public) profile_public FROM posts p LEFT JOIN members m ON m.id=p.member_author_id LEFT JOIN users u ON u.id=p.author_id WHERE p.status='published' ORDER BY p.fecha DESC")->fetchAll();
 $posts = array_map('ensure_post_slug', $posts);
 render_header('Inicio', ['canonical' => '/']);
 ?>

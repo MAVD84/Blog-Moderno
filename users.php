@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('Revisa los datos. El usuario debe tener 3 caracteres y la contraseña al menos 12.', 'error');
     } else {
         try {
-            $stmt = db()->prepare('INSERT INTO users (username, display_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)');
-            $stmt->execute([$username, $displayName, $email ?: null, password_hash($password, PASSWORD_DEFAULT), $role]);
+            $stmt = db()->prepare('INSERT INTO users (username, display_name, email, password_hash, role, profile_slug) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$username, $displayName, $email ?: null, password_hash($password, PASSWORD_DEFAULT), $role, unique_staff_slug($displayName)]);
             flash('Usuario creado correctamente.');
         } catch (PDOException $error) {
             flash($error->getCode() === '23000' ? 'El usuario o correo ya existe.' : 'No se pudo crear el usuario.', 'error');

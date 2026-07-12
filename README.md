@@ -76,6 +76,8 @@ El color del texto también es configurable mediante un interruptor independient
 
 Ejecuta `migrations/010_public_profiles.sql` para habilitar perfiles públicos opcionales y seguidores. Cada lector decide la privacidad desde su perfil; solo los perfiles públicos exponen su fecha de registro y publicaciones recientes.
 
+Ejecuta `migrations/011_staff_profiles.sql` para dar perfiles sociales a administradores y editores. El perfil de autor mantiene separados los permisos del panel e incorpora avatar, biografía, privacidad, publicaciones y seguidores.
+
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
 
 ## Despliegue

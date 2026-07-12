@@ -2,6 +2,7 @@ Options -Indexes
 RewriteEngine On
 
 RewriteRule ^usuario/([a-z0-9][a-z0-9-]*)/?$ public-profile.php?slug=$1 [L,QSA,NC]
+RewriteRule ^autor/([a-z0-9][a-z0-9-]*)/?$ public-author.php?slug=$1 [L,QSA,NC]
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
