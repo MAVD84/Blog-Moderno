@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/functions.php';
-require_admin();
+require_login();
 
-$comments = db()->query(
+$stmt = db()->prepare(
     'SELECT c.*,p.titulo,p.slug,COALESCE(m.avatar,u.avatar) author_avatar,
             COALESCE(m.profile_slug,u.profile_slug) author_profile_slug,
             COALESCE(m.profile_public,u.profile_public) author_profile_public
@@ -10,8 +10,11 @@ $comments = db()->query(
      JOIN posts p ON p.id = c.post_id
      LEFT JOIN members m ON m.id=c.member_id
      LEFT JOIN users u ON u.id=c.staff_author_id
+     WHERE p.author_id=?
      ORDER BY c.aprobado ASC, c.fecha DESC'
-)->fetchAll();
+);
+$stmt->execute([current_user_id()]);
+$comments = $stmt->fetchAll();
 foreach ($comments as &$comment) {
     if (empty($comment['slug'])) {
         $article = ensure_post_slug(['id' => (int)$comment['post_id'], 'titulo' => $comment['titulo'], 'slug' => null]);
@@ -27,7 +30,7 @@ render_header('Administrar comentarios', ['robots' => 'noindex,nofollow']);
     <div class="moderation-title">
         <div>
             <h1>Administrar comentarios</h1>
-            <p class="muted">El correo solo es visible para ti.</p>
+            <p class="muted">Solo puedes moderar comentarios de tus propias publicaciones.</p>
         </div>
         <span class="count-badge"><?= $pendingCount ?> pendiente<?= $pendingCount === 1 ? '' : 's' ?></span>
     </div>
