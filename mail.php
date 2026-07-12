@@ -35,3 +35,12 @@ function send_reset_email(array $member): void
     $url = absolute_url('/reset-password.php?token=' . create_member_token((int)$member['id'], 'reset', 1));
     send_site_mail($member['email'], 'Restablece tu contraseña', '<h2>Restablecer contraseña</h2><p><a href="' . e($url) . '">Crear una contraseña nueva</a></p><p>El enlace vence en una hora.</p>', "Restablece tu contraseña: {$url}");
 }
+
+function send_staff_verification_email(array $user): void
+{
+    $raw=bin2hex(random_bytes(32));$expires=(new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s');$pdo=db();
+    $pdo->prepare('DELETE FROM user_email_tokens WHERE user_id=?')->execute([$user['id']]);
+    $pdo->prepare('INSERT INTO user_email_tokens(user_id,token_hash,expires_at) VALUES(?,?,?)')->execute([$user['id'],hash('sha256',$raw),$expires]);
+    $url=absolute_url('/verify-staff-email.php?token='.$raw);
+    send_site_mail($user['email'],'Verifica tu nuevo correo','<h2>Verifica tu correo</h2><p><a href="'.e($url).'">Confirmar correo electrónico</a></p><p>El enlace vence en 24 horas.</p>',"Verifica tu correo: {$url}");
+}

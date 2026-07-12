@@ -72,6 +72,8 @@ Las instalaciones nuevas comienzan sin logo, favicon, imagen social, descripció
 
 El instalador solicita usuario, correo y contraseña del administrador. En instalaciones existentes, el correo administrativo se puede completar desde el perfil de autor.
 
+Ejecuta `migrations/015_email_reverification.sql` para exigir una nueva verificación cada vez que lectores, administradores o editores cambien su correo electrónico.
+
 El color principal global se puede cambiar desde Configuración. El selector actualiza botones, enlaces, estados activos y detalles del tema sin modificar CSS manualmente.
 
 El color del texto también es configurable mediante un interruptor independiente. Al desactivarlo, el sitio restaura los colores tipográficos originales.
