@@ -96,6 +96,7 @@ function site_settings(): array
         'theme_color' => '#5546e8',
         'custom_text_color' => '0',
         'text_color' => '#172033',
+        'site_timezone' => 'America/Matamoros',
     ];
     try {
         foreach (db()->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll() as $row) {
@@ -109,6 +110,16 @@ function site_settings(): array
 
 function site_setting(string $key): string { return site_settings()[$key] ?? ''; }
 
+function apply_site_timezone(): void
+{
+    static $applied=false;if($applied)return;
+    $timezone=site_setting('site_timezone')?:'America/Matamoros';
+    if(!in_array($timezone,DateTimeZone::listIdentifiers(),true)){$timezone='America/Matamoros';}
+    date_default_timezone_set($timezone);
+    $pdo=db();$pdo->exec('SET time_zone='.$pdo->quote(date('P')));
+    $applied=true;
+}
+
 function save_site_settings(array $values): void
 {
     $stmt = db()->prepare(
@@ -117,6 +128,8 @@ function save_site_settings(array $values): void
     );
     foreach ($values as $key => $value) { $stmt->execute([$key, $value]); }
 }
+
+apply_site_timezone();
 
 function slugify(string $title): string
 {

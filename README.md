@@ -80,6 +80,8 @@ Ejecuta `migrations/011_staff_profiles.sql` para dar perfiles sociales a adminis
 
 Ejecuta `migrations/012_post_shares.sql` para mostrar un contador de veces compartido junto a las reacciones. Se registra como máximo una compartida por visitante y día.
 
+La zona horaria se selecciona desde Configuración y se aplica tanto a PHP como a la sesión MySQL. El valor inicial es `America/Matamoros`.
+
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
 
 ## Despliegue

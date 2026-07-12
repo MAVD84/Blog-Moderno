@@ -56,7 +56,7 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .card p { color:var(--text); }
 .card small, .muted { color: var(--muted); }
 .more { margin-top: auto; color: var(--primary); font-weight: 750; }
-.card-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:18px -4px -8px; padding-top:14px; border-top:1px solid var(--line); color:var(--muted); font-size:.8rem; font-weight:700; }
+.card-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin:18px -4px -8px; padding-top:14px; border-top:1px solid var(--line); color:var(--muted); font-size:.8rem; font-weight:700; }
 .card-stats span { min-width:0; padding:3px 4px; text-align:center; white-space:nowrap; }
 
 .cover-wrap { width: 100%; display: flex; align-items: center; justify-content: center; background: #101828; overflow: hidden; }

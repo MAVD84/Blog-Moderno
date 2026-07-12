@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'theme_color' => strtolower(trim($_POST['theme_color'] ?? '#5546e8')),
         'custom_text_color' => isset($_POST['custom_text_color']) ? '1' : '0',
         'text_color' => strtolower(trim($_POST['text_color'] ?? '#172033')),
+        'site_timezone' => trim($_POST['site_timezone'] ?? 'America/Matamoros'),
     ];
     if (isset($_POST['reset_favicon'])) { $values['favicon_image'] = '/assets/favicon.png'; }
     if (isset($_POST['remove_logo'])) { $values['logo_image'] = ''; }
@@ -29,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!preg_match('/^#[0-9a-f]{6}$/', $values['theme_color'])) { flash('Selecciona un color principal válido.', 'error'); redirect('settings.php'); }
     if (!preg_match('/^#[0-9a-f]{6}$/', $values['text_color'])) { flash('Selecciona un color de texto válido.', 'error'); redirect('settings.php'); }
+    if (!in_array($values['site_timezone'], DateTimeZone::listIdentifiers(), true)) { flash('Selecciona una zona horaria válida.', 'error'); redirect('settings.php'); }
 
     $newFiles = [];
     try {
@@ -62,6 +64,7 @@ render_header('Configuración', ['robots' => 'noindex,nofollow']);
         <label>Subtítulo<input name="site_tagline" maxlength="160" value="<?= e($settings['site_tagline']) ?>" required></label>
         <label>Descripción SEO<textarea name="site_description" maxlength="300" rows="4" required><?= e($settings['site_description']) ?></textarea><small>Se utiliza en Google y al compartir la página principal.</small></label>
         <label>Texto del footer<input name="footer_text" maxlength="160" value="<?= e($settings['footer_text']) ?>" required></label>
+        <label>Zona horaria<select name="site_timezone"><option value="America/Matamoros" <?=$settings['site_timezone']==='America/Matamoros'?'selected':''?>>Matamoros</option><option value="America/Ciudad_Juarez" <?=$settings['site_timezone']==='America/Ciudad_Juarez'?'selected':''?>>Ciudad Juárez</option><option value="America/Mexico_City" <?=$settings['site_timezone']==='America/Mexico_City'?'selected':''?>>Ciudad de México</option><option value="America/Monterrey" <?=$settings['site_timezone']==='America/Monterrey'?'selected':''?>>Monterrey</option><option value="America/New_York" <?=$settings['site_timezone']==='America/New_York'?'selected':''?>>Nueva York</option><option value="America/Los_Angeles" <?=$settings['site_timezone']==='America/Los_Angeles'?'selected':''?>>Los Ángeles</option><option value="UTC" <?=$settings['site_timezone']==='UTC'?'selected':''?>>UTC</option></select><small>Controla las fechas y horas mostradas en todo el sitio.</small></label>
         <label>Color principal<div class="color-control"><input type="color" name="theme_color" value="<?= e($settings['theme_color']) ?>" aria-label="Seleccionar color principal"><output><?= e(strtoupper($settings['theme_color'])) ?></output><span class="color-swatch" style="background:<?= e($settings['theme_color']) ?>"></span></div><small>Cambia globalmente botones, enlaces, menús, bordes activos y elementos destacados.</small></label>
         <div class="text-color-setting"><label class="privacy-toggle"><span><strong>Color de texto personalizado</strong><small>Desactívalo para conservar el color original.</small></span><input type="checkbox" name="custom_text_color" value="1" <?=$settings['custom_text_color']==='1'?'checked':''?> data-text-color-toggle><i aria-hidden="true"></i></label><label>Color global del texto<div class="color-control"><input type="color" name="text_color" value="<?=e($settings['text_color'])?>" aria-label="Seleccionar color del texto" data-text-color><output><?=e(strtoupper($settings['text_color']))?></output><span class="color-swatch" style="background:<?=e($settings['text_color'])?>"></span></div></label></div>
         <label>Imagen social predeterminada<input type="file" name="og_image" accept="image/png,image/jpeg,image/webp"><small>Recomendado: 1200 × 630 px. Los posts con portada usan su propia imagen.</small></label>
