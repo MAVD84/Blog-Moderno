@@ -3,9 +3,13 @@ require_once __DIR__ . '/functions.php';
 require_admin();
 
 $comments = db()->query(
-    'SELECT c.*, p.titulo, p.slug
+    'SELECT c.*,p.titulo,p.slug,COALESCE(m.avatar,u.avatar) author_avatar,
+            COALESCE(m.profile_slug,u.profile_slug) author_profile_slug,
+            COALESCE(m.profile_public,u.profile_public) author_profile_public
      FROM comments c
      JOIN posts p ON p.id = c.post_id
+     LEFT JOIN members m ON m.id=c.member_id
+     LEFT JOIN users u ON u.id=c.staff_author_id
      ORDER BY c.aprobado ASC, c.fecha DESC'
 )->fetchAll();
 foreach ($comments as &$comment) {
@@ -31,10 +35,8 @@ render_header('Administrar comentarios', ['robots' => 'noindex,nofollow']);
     <?php foreach ($comments as $comment): ?>
         <article class="moderation">
             <div class="moderation-meta">
-                <div>
-                    <strong><?= e($comment['nombre']) ?></strong>
-                    <span class="muted">&lt;<?= e($comment['email']) ?>&gt;</span>
-                </div>
+                <?php $profileData=['profile_slug'=>$comment['author_profile_slug'],'profile_public'=>$comment['author_profile_public']];$profileUrl=$comment['staff_author_id']?public_author_url($profileData):public_profile_url($profileData); ?>
+                <div class="moderation-user"><?php if($profileUrl):?><a class="author-profile-link" href="<?=e($profileUrl)?>"><?php endif;?><?php if($comment['author_avatar']):?><img class="avatar member-admin-avatar" src="/uploads/<?=e($comment['author_avatar'])?>" alt="Avatar de <?=e($comment['nombre'])?>"><?php else:?><span class="avatar member-admin-avatar avatar-fallback"><?=e(mb_strtoupper(mb_substr($comment['nombre'],0,1)))?></span><?php endif;?><span><strong><?= e($comment['nombre']) ?></strong><span class="muted moderation-email">&lt;<?= e($comment['email']) ?>&gt;</span></span><?php if($profileUrl):?></a><?php endif;?></div>
                 <span class="status-badge <?= $comment['aprobado'] ? 'approved' : 'pending' ?>">
                     <?= $comment['aprobado'] ? 'Aprobado' : 'Pendiente' ?>
                 </span>

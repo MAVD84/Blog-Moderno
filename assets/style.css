@@ -172,6 +172,9 @@ input[type="file"]::file-selector-button { margin-right: 12px; padding: 8px 12px
 .moderation-title, .moderation-meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .moderation-title { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .moderation-title h1, .moderation-title p { margin: 0; }
+.moderation-user,.moderation-user > a { display:flex; align-items:center; gap:12px; min-width:0; }
+.moderation-user > span,.moderation-user a > span { min-width:0; }
+.moderation-email { display:block; overflow-wrap:anywhere; }
 .count-badge, .status-badge { display: inline-flex; align-items: center; white-space: nowrap; border-radius: 999px; font-size: .78rem; font-weight: 750; }
 .count-badge { padding: 7px 11px; color:var(--primary-dark); background:var(--primary-soft); }
 .status-badge { padding: 5px 9px; }
