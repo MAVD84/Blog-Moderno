@@ -16,10 +16,13 @@ function is_logged_in(): bool
 {
     if (($_SESSION['authenticated'] ?? $_SESSION['admin'] ?? false) !== true) { return false; }
     $lastActivity = (int)($_SESSION['last_activity'] ?? 0);
-    if ($lastActivity === 0 || time() - $lastActivity > 1800) {
+    $lifetime = max(1800, min(86400, (int) (getenv('SESSION_LIFETIME') ?: 7200)));
+    if ($lastActivity > 0 && time() - $lastActivity > $lifetime) {
         unset($_SESSION['authenticated'], $_SESSION['admin'], $_SESSION['role'], $_SESSION['user_id'], $_SESSION['display_name'], $_SESSION['last_activity']);
+        $_SESSION['session_expired'] = true;
         return false;
     }
+    if ($lastActivity === 0) { $_SESSION['last_activity'] = time(); }
     $_SESSION['last_activity'] = time();
     return true;
 }
@@ -47,10 +50,20 @@ function current_member(): ?array
     if ($member !== false) { return $member ?: null; }
     $id = (int)($_SESSION['member_id'] ?? 0);
     if (!$id) { $member = null; return null; }
+    $lifetime = max(1800, min(86400, (int) (getenv('SESSION_LIFETIME') ?: 7200)));
+    $lastActivity = (int) ($_SESSION['member_last_activity'] ?? 0);
+    if ($lastActivity > 0 && time() - $lastActivity > $lifetime) {
+        unset($_SESSION['member_id'], $_SESSION['member_last_activity']);
+        $_SESSION['session_expired'] = true;
+        $member = null;
+        return null;
+    }
+    if ($lastActivity === 0) { $_SESSION['member_last_activity'] = time(); }
     $stmt = db()->prepare('SELECT * FROM members WHERE id = ? AND active = 1');
     $stmt->execute([$id]);
     $member = $stmt->fetch() ?: null;
-    if (!$member) { unset($_SESSION['member_id']); }
+    if (!$member) { unset($_SESSION['member_id'], $_SESSION['member_last_activity']); }
+    else { $_SESSION['member_last_activity'] = time(); }
     return $member;
 }
 function is_member_logged_in(): bool { return current_member() !== null; }
@@ -58,7 +71,7 @@ function is_member_verified(): bool { return !empty(current_member()['email_veri
 function require_member(bool $verified = true): array
 {
     $member = current_member();
-    if (!$member) { flash('Inicia sesión para continuar.', 'error'); redirect('/member-login.php'); }
+    if (!$member) { $expired=!empty($_SESSION['session_expired']);unset($_SESSION['session_expired']);flash($expired?'Tu sesión expiró. Inicia sesión nuevamente.':'Inicia sesión para continuar.', 'error'); redirect('/member-login.php'); }
     if ($verified && empty($member['email_verified_at'])) { flash('Primero verifica tu correo electrónico.', 'error'); redirect('/profile.php'); }
     return $member;
 }
@@ -173,8 +186,10 @@ function flash(string $message, string $type = 'success'): void
 function require_login(): void
 {
     if (!is_logged_in()) {
-        flash('Por favor inicia sesión.', 'error');
-        redirect('login.php');
+        $expired = !empty($_SESSION['session_expired']);
+        unset($_SESSION['session_expired']);
+        flash($expired ? 'Tu sesión expiró. Inicia sesión nuevamente.' : 'Por favor inicia sesión.', 'error');
+        redirect('/login.php');
     }
 }
 
@@ -453,7 +468,7 @@ function render_header(string $title, array $metadata = []): void
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
 <?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
 <?php $customText=site_setting('custom_text_color')==='1'&&preg_match('/^#[0-9a-f]{6}$/i',site_setting('text_color'));$globalText=$customText?site_setting('text_color'):'#172033'; ?><link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"><style>:root{--primary:<?= e(preg_match('/^#[0-9a-f]{6}$/i',site_setting('theme_color'))?site_setting('theme_color'):'#5546e8') ?>;--text:<?=e($globalText)?>;<?php if($customText):?>--muted:<?=e($globalText)?>;<?php endif;?>}</style></head><body>
-<nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a>
+<nav><a class="brand" href="/index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a>
 <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-controls="site-menu" aria-expanded="false"><span></span><span></span><span></span></button>
 <div class="menu-overlay" data-menu-close></div><div class="nav-menu" id="site-menu"><div class="menu-header"><strong>Menú</strong><button type="button" class="menu-close" data-menu-close aria-label="Cerrar menú">×</button></div>
 <a href="/index.php">Inicio</a><a href="/community.php">Comunidad</a><?php if (is_logged_in()): ?><a href="/admin.php">Escribir</a><?php if (is_admin()): ?><details class="nav-dropdown"><summary>Administrar</summary><div><a href="/community-moderation.php">Publicaciones</a><a href="/comments.php">Comentarios</a><a href="/users.php">Usuarios</a><a href="/members.php">Lectores</a><a href="/security.php">Seguridad</a><a href="/settings.php">Configuración</a></div></details><?php endif; ?><a href="/account.php">Mi cuenta</a><form class="inline logout-form" method="post" action="/logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir del panel</button></form><?php elseif (is_member_logged_in()): ?><a href="/community-write.php">Publicar</a><a href="/member-posts.php">Mis publicaciones</a><a href="/my-comments.php">Respuestas</a><a class="profile-link" href="/profile.php"><?php if(current_member()['avatar']):?><img class="nav-avatar" src="/uploads/<?=e(current_member()['avatar'])?>" alt=""><?php endif;?>Mi perfil</a><form class="inline logout-form" method="post" action="/member-logout.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><button class="link danger">Salir</button></form><?php else: ?><a href="/member-login.php">Acceder</a><a href="/register.php">Registrarse</a><?php endif; ?></div>

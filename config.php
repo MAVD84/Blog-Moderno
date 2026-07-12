@@ -57,6 +57,8 @@ if ($secure && !request_is_https() && PHP_SAPI !== 'cli') {
 
 ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
+$sessionLifetime = max(1800, min(86400, (int) (getenv('SESSION_LIFETIME') ?: 7200)));
+ini_set('session.gc_maxlifetime', (string) $sessionLifetime);
 session_name($secure ? '__Host-blog_session' : 'blog_session');
 session_set_cookie_params([
     'httponly' => true,

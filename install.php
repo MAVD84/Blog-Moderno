@@ -69,7 +69,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             'DB_USER' => $fields['db_user'], 'DB_PASSWORD' => $fields['db_password'],
             'ADMIN_USER' => $fields['admin_user'], 'ADMIN_PASSWORD_HASH' => $adminHash,
             'APP_SECRET' => bin2hex(random_bytes(32)), 'SITE_URL' => rtrim($fields['site_url'], '/'),
-            'SESSION_COOKIE_SECURE' => 'true',
+            'SESSION_COOKIE_SECURE' => 'true', 'SESSION_LIFETIME' => '7200',
             'SMTP_HOST' => $fields['smtp_host'], 'SMTP_PORT' => $fields['smtp_port'],
             'SMTP_ENCRYPTION' => 'ssl', 'SMTP_USERNAME' => $fields['smtp_username'],
             'SMTP_PASSWORD' => $fields['smtp_password'], 'SMTP_FROM_EMAIL' => $fields['smtp_username'],

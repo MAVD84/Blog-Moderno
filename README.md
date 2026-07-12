@@ -28,7 +28,10 @@ ADMIN_PASSWORD=tu-contraseña-normal
 APP_SECRET=una-clave-aleatoria-larga
 SITE_URL=https://jrz.wtf
 SESSION_COOKIE_SECURE=true
+SESSION_LIFETIME=7200
 ```
+
+`SESSION_LIFETIME` indica en segundos el tiempo máximo de inactividad. El valor predeterminado es 7200 (2 horas), con un mínimo de 30 minutos y un máximo de 24 horas.
 
 También puedes guardarlas en un archivo `.env` ubicado junto a `config.php`. El archivo está excluido de Git y no debe subirse al repositorio. En Linux aplica permisos restrictivos con `chmod 600 .env`.
 
