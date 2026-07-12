@@ -16,9 +16,22 @@ CREATE TABLE IF NOT EXISTS members (
     display_name VARCHAR(100) NOT NULL,
     bio VARCHAR(500) NULL,
     avatar VARCHAR(255) NULL,
+    profile_slug VARCHAR(190) NOT NULL UNIQUE,
+    profile_public BOOLEAN NOT NULL DEFAULT FALSE,
     email_verified_at TIMESTAMP NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS member_follows (
+    follower_id BIGINT UNSIGNED NOT NULL,
+    followed_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, followed_id),
+    CONSTRAINT fk_follows_follower FOREIGN KEY (follower_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT fk_follows_followed FOREIGN KEY (followed_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT chk_not_self_follow CHECK (follower_id <> followed_id),
+    INDEX idx_follows_followed (followed_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS posts (

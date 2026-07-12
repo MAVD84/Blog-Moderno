@@ -3,7 +3,7 @@ require_once __DIR__ . '/functions.php'; require_once __DIR__ . '/mail.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') { verify_csrf(); if (!member_auth_allowed('register')) { flash('Demasiados intentos. Espera 15 minutos.', 'error'); redirect('/register.php'); } record_member_auth('register');
     $name = trim((string)($_POST['display_name'] ?? '')); $email = strtolower(trim((string)($_POST['email'] ?? ''))); $password = (string)($_POST['password'] ?? '');
     try { if (mb_strlen($name) < 2 || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 10) { throw new RuntimeException('Usa un nombre válido, correo válido y una contraseña de al menos 10 caracteres.'); }
-        $stmt = db()->prepare('INSERT INTO members (email,password_hash,display_name) VALUES (?,?,?)'); $stmt->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name]);
+        $stmt = db()->prepare('INSERT INTO members (email,password_hash,display_name,profile_slug) VALUES (?,?,?,?)'); $stmt->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, unique_member_slug($name)]);
         $member = ['id' => (int)db()->lastInsertId(), 'email' => $email, 'display_name' => $name]; send_verification_email($member);
         flash('Cuenta creada. Revisa tu correo para verificarla.'); redirect('/member-login.php');
     } catch (PDOException) { flash('Ese correo ya está registrado.', 'error'); } catch (Throwable $e) { flash($e->getMessage(), 'error'); }
