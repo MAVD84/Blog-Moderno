@@ -72,6 +72,8 @@ Las instalaciones nuevas comienzan sin logo, favicon, imagen social, descripció
 
 El color principal global se puede cambiar desde Configuración. El selector actualiza botones, enlaces, estados activos y detalles del tema sin modificar CSS manualmente.
 
+El color del texto también es configurable mediante un interruptor independiente. Al desactivarlo, el sitio restaura los colores tipográficos originales.
+
 Ejecuta `migrations/010_public_profiles.sql` para habilitar perfiles públicos opcionales y seguidores. Cada lector decide la privacidad desde su perfil; solo los perfiles públicos exponen su fecha de registro y publicaciones recientes.
 
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.

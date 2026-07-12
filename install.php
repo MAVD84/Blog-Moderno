@@ -53,6 +53,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             'footer_text' => $fields['site_name'], 'og_image' => '',
             'favicon_image' => '', 'logo_image' => '',
             'theme_color' => '#5546e8',
+            'custom_text_color' => '0', 'text_color' => '#172033',
         ];
         $stmt = $pdo->prepare('INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
         foreach ($settings as $key => $value) { $stmt->execute([$key, $value]); }

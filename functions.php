@@ -91,6 +91,8 @@ function site_settings(): array
         'favicon_image' => '',
         'logo_image' => '',
         'theme_color' => '#5546e8',
+        'custom_text_color' => '0',
+        'text_color' => '#172033',
     ];
     try {
         foreach (db()->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll() as $row) {
@@ -428,7 +430,7 @@ function render_header(string $title, array $metadata = []): void
 <?php if ($socialImage !== ''): ?><meta name="twitter:image" content="<?= e($socialImage) ?>"><?php endif; ?>
 <?php if (!empty($metadata['published_time'])): ?><meta property="article:published_time" content="<?= e($metadata['published_time']) ?>"><?php endif; ?>
 <?php if ($type === 'article'): ?><script type="application/ld+json"><?= json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
-<link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"><style>:root{--primary:<?= e(preg_match('/^#[0-9a-f]{6}$/i',site_setting('theme_color'))?site_setting('theme_color'):'#5546e8') ?>}</style></head><body>
+<?php $customText=site_setting('custom_text_color')==='1'&&preg_match('/^#[0-9a-f]{6}$/i',site_setting('text_color'));$globalText=$customText?site_setting('text_color'):'#172033'; ?><link rel="stylesheet" href="/assets/style.css?v=<?= e($styleVersion) ?>"><style>:root{--primary:<?= e(preg_match('/^#[0-9a-f]{6}$/i',site_setting('theme_color'))?site_setting('theme_color'):'#5546e8') ?>;--text:<?=e($globalText)?>;<?php if($customText):?>--muted:<?=e($globalText)?>;<?php endif;?>}</style></head><body>
 <nav><a class="brand" href="index.php"><?php if (site_setting('logo_image')): ?><img class="brand-logo" src="<?= e(site_setting('logo_image')) ?>" alt="<?= e(site_setting('site_name')) ?>"><?php else: ?><?= e(site_setting('site_name')) ?><?php endif; ?></a>
 <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-controls="site-menu" aria-expanded="false"><span></span><span></span><span></span></button>
 <div class="menu-overlay" data-menu-close></div><div class="nav-menu" id="site-menu"><div class="menu-header"><strong>Menú</strong><button type="button" class="menu-close" data-menu-close aria-label="Cerrar menú">×</button></div>
