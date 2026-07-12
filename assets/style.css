@@ -82,8 +82,15 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 .avatar { width:38px; height:38px; flex:0 0 auto; border-radius:50%; object-fit:cover; background:#eef2ff; }
 .avatar-lg { width:82px; height:82px; font-size:2rem; }
 .avatar-fallback { display:inline-flex; align-items:center; justify-content:center; color:var(--primary); font-weight:850; }
-.profile-head { display:flex; align-items:center; gap:18px; }
-.profile-head h1,.profile-head p { margin:0; }
+.profile-head { display:flex; align-items:flex-start; gap:22px; margin-bottom:24px; }
+.profile-title { min-width:0; padding-top:8px; overflow-wrap:anywhere; }
+.profile-head h1,.profile-title > p { margin:0; }
+.profile-photo { width:132px; flex:0 0 132px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+.profile-photo small { color:var(--muted); font-size:.72rem; }
+.avatar-picker { width:100%; margin:0; cursor:pointer; }
+.avatar-picker input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+.avatar-picker span { min-height:36px; display:flex; align-items:center; justify-content:center; padding:7px 10px; border:1px solid #c7d2fe; border-radius:8px; color:var(--primary); background:#eef2ff; font-size:.78rem; font-weight:800; }
+.avatar-picker:hover span { border-color:var(--primary); background:#e0e7ff; }
 .verification-box { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0; padding:16px; border-radius:10px; background:#fff7ed; }
 .verified { color:var(--success); font-weight:750; }
 .post-stats { display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin-top:18px; color:var(--muted); font-weight:650; }
@@ -213,4 +220,6 @@ legend { padding: 0 8px; color: var(--primary); font-weight: 800; }
   .editor-status { justify-content: flex-end; }
   .moderation-title, .moderation-meta { align-items: flex-start; flex-direction: column; }
   .verification-box { align-items:stretch; flex-direction:column; }
+  .profile-head { gap:16px; }
+  .profile-photo { width:116px; flex-basis:116px; }
 }
