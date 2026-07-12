@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-$posts = db()->query('SELECT id, titulo, slug, contenido, imagen, author_name, fecha FROM posts ORDER BY fecha DESC')->fetchAll();
+$posts = db()->query("SELECT id,titulo,slug,contenido,imagen,author_name,fecha,post_type FROM posts WHERE status='published' ORDER BY fecha DESC")->fetchAll();
 $posts = array_map('ensure_post_slug', $posts);
 render_header('Inicio', ['canonical' => '/']);
 ?>

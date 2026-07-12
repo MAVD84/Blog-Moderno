@@ -62,6 +62,12 @@ Los visitantes envían comentarios desde cada artículo. El correo es privado y 
 
 Ejecuta `migrations/006_members_reactions.sql` en phpMyAdmin. Los lectores se registran, verifican su correo y entonces pueden comentar, dar like o dislike y subir un avatar. Las vistas cuentan una vez por visitante y día. Los comentarios siguen sujetos a aprobación.
 
+Para habilitar respuestas en hilos en una instalación existente, ejecuta también `migrations/007_comment_replies.sql`. Los lectores verificados y el personal del blog pueden responder; cada respuesta permanece pendiente hasta ser aprobada.
+
+Ejecuta `migrations/008_comment_reactions.sql` para habilitar likes y dislikes en comentarios. Cada lector puede moderar desde `my-comments.php` las respuestas directas recibidas en sus propios comentarios; la administración mantiene control global.
+
+Ejecuta `migrations/009_community_posts.sql` para habilitar la comunidad. Los lectores verificados pueden crear y editar temas con portada; estos quedan pendientes hasta que un administrador los aprueba desde `community-moderation.php`.
+
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
 
 ## Despliegue

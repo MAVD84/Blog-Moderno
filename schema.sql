@@ -28,9 +28,13 @@ CREATE TABLE IF NOT EXISTS posts (
     contenido MEDIUMTEXT NOT NULL,
     imagen VARCHAR(255) NULL,
     author_id BIGINT UNSIGNED NULL,
+    member_author_id BIGINT UNSIGNED NULL,
     author_name VARCHAR(100) NOT NULL DEFAULT 'Administrador',
+    post_type ENUM('blog', 'community') NOT NULL DEFAULT 'blog',
+    status ENUM('pending', 'published', 'rejected') NOT NULL DEFAULT 'published',
     fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_posts_member_author FOREIGN KEY (member_author_id) REFERENCES members(id) ON DELETE SET NULL,
     INDEX idx_posts_fecha (fecha)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -44,8 +48,10 @@ CREATE TABLE IF NOT EXISTS comments (
     fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_aprobacion TIMESTAMP NULL,
     member_id BIGINT UNSIGNED NULL,
+    parent_id BIGINT UNSIGNED NULL,
     CONSTRAINT fk_comments_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     CONSTRAINT fk_comments_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE SET NULL,
+    CONSTRAINT fk_comments_parent FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
     INDEX idx_comments_moderation (post_id, aprobado, fecha)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -79,6 +85,17 @@ CREATE TABLE IF NOT EXISTS post_views (
     PRIMARY KEY (post_id, visitor_hash, viewed_on),
     CONSTRAINT fk_views_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     INDEX idx_post_views_count (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS comment_reactions (
+    comment_id BIGINT UNSIGNED NOT NULL,
+    member_id BIGINT UNSIGNED NOT NULL,
+    reaction TINYINT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (comment_id, member_id),
+    CONSTRAINT fk_comment_reactions_comment FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_reactions_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT chk_comment_reaction CHECK (reaction IN (-1, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS member_auth_attempts (
