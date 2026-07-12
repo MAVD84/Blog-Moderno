@@ -70,6 +70,8 @@ Ejecuta `migrations/009_community_posts.sql` para habilitar la comunidad. Los le
 
 Las instalaciones nuevas comienzan sin logo, favicon, imagen social, descripción, eslogan ni contenido SEO de ejemplo. Configura la identidad y metadata después desde el panel administrativo.
 
+El instalador solicita usuario, correo y contraseña del administrador. En instalaciones existentes, el correo administrativo se puede completar desde el perfil de autor.
+
 El color principal global se puede cambiar desde Configuración. El selector actualiza botones, enlaces, estados activos y detalles del tema sin modificar CSS manualmente.
 
 El color del texto también es configurable mediante un interruptor independiente. Al desactivarlo, el sitio restaura los colores tipográficos originales.

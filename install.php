@@ -29,12 +29,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (in_array(false, $requirements, true)) { throw new RuntimeException('El servidor no cumple todos los requisitos de PHP.'); }
 
         $fields = [];
-        foreach (['db_host', 'db_port', 'db_name', 'db_user', 'db_password', 'admin_user', 'admin_password', 'admin_confirm', 'site_url', 'site_name', 'site_title', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password'] as $field) {
+        foreach (['db_host', 'db_port', 'db_name', 'db_user', 'db_password', 'admin_user', 'admin_email', 'admin_password', 'admin_confirm', 'site_url', 'site_name', 'site_title', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password'] as $field) {
             $fields[$field] = trim((string)($_POST[$field] ?? ''));
             if ($fields[$field] === '' || str_contains($fields[$field], "\n") || str_contains($fields[$field], "\r")) { throw new RuntimeException('Completa todos los campos correctamente.'); }
         }
         if ($fields['admin_password'] !== $fields['admin_confirm']) { throw new RuntimeException('Las contraseñas administrativas no coinciden.'); }
         if (strlen($fields['admin_password']) < 12) { throw new RuntimeException('La contraseña administrativa debe tener al menos 12 caracteres.'); }
+        if (!filter_var($fields['admin_email'], FILTER_VALIDATE_EMAIL)) { throw new RuntimeException('El correo del administrador no es válido.'); }
         if (!filter_var($fields['site_url'], FILTER_VALIDATE_URL) || !str_starts_with($fields['site_url'], 'https://')) { throw new RuntimeException('La URL del sitio debe ser HTTPS y válida.'); }
         if (!ctype_digit($fields['db_port'])) { throw new RuntimeException('El puerto MySQL no es válido.'); }
         if (!ctype_digit($fields['smtp_port']) || !filter_var($fields['smtp_username'], FILTER_VALIDATE_EMAIL)) { throw new RuntimeException('Revisa el puerto y el correo SMTP.'); }
@@ -60,8 +61,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         foreach ($settings as $key => $value) { $stmt->execute([$key, $value]); }
 
         $adminHash = password_hash($fields['admin_password'], PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO users (username, display_name, password_hash, role, profile_slug) VALUES (?, ?, ?, 'admin', ?)");
-        $stmt->execute([$fields['admin_user'], $fields['admin_user'], $adminHash, 'administrador']);
+        $stmt = $pdo->prepare("INSERT INTO users (username, display_name, email, password_hash, role, profile_slug) VALUES (?, ?, ?, ?, 'admin', ?)");
+        $stmt->execute([$fields['admin_user'], $fields['admin_user'], $fields['admin_email'], $adminHash, 'administrador']);
 
         $env = [
             'DB_HOST' => $fields['db_host'], 'DB_PORT' => $fields['db_port'], 'DB_NAME' => $fields['db_name'],
@@ -98,7 +99,7 @@ $defaultUrl = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'tudominio.com');
 <div class="requirements"><?php foreach ($requirements as $name => $valid): ?><span class="requirement <?= $valid ? 'ok' : 'bad' ?>"><?= $valid ? '✓' : '×' ?> <?= installer_e($name) ?></span><?php endforeach; ?></div>
 <form method="post"><input type="hidden" name="csrf_token" value="<?= installer_e($_SESSION['install_csrf']) ?>">
 <fieldset><legend>Base de datos MySQL</legend><div class="settings-grid"><label>Servidor<input name="db_host" value="<?= installer_e($_POST['db_host'] ?? 'localhost') ?>" required></label><label>Puerto<input name="db_port" inputmode="numeric" value="<?= installer_e($_POST['db_port'] ?? '3306') ?>" required></label><label>Base de datos<input name="db_name" value="<?= installer_e($_POST['db_name'] ?? '') ?>" required></label><label>Usuario MySQL<input name="db_user" value="<?= installer_e($_POST['db_user'] ?? '') ?>" required></label></div><label>Contraseña MySQL<input type="password" name="db_password" required></label></fieldset>
-<fieldset><legend>Administrador</legend><div class="settings-grid"><label>Usuario<input name="admin_user" value="<?= installer_e($_POST['admin_user'] ?? 'admin') ?>" required></label><span></span><label>Contraseña<input type="password" name="admin_password" minlength="12" required></label><label>Confirmar contraseña<input type="password" name="admin_confirm" minlength="12" required></label></div></fieldset>
+<fieldset><legend>Administrador</legend><div class="settings-grid"><label>Usuario<input name="admin_user" value="<?= installer_e($_POST['admin_user'] ?? 'admin') ?>" required></label><label>Correo electrónico<input type="email" name="admin_email" value="<?=installer_e($_POST['admin_email']??'')?>" autocomplete="email" required></label><label>Contraseña<input type="password" name="admin_password" minlength="12" required></label><label>Confirmar contraseña<input type="password" name="admin_confirm" minlength="12" required></label></div></fieldset>
 <fieldset><legend>Identidad del sitio</legend><p class="muted">La instalación comenzará sin logo, favicon, imagen social, descripción ni textos SEO. Podrás agregarlos después desde Configuración.</p><label>URL HTTPS<input type="url" name="site_url" value="<?= installer_e($_POST['site_url'] ?? $defaultUrl) ?>" required></label><div class="settings-grid"><label>Nombre del sitio<input name="site_name" maxlength="50" value="<?= installer_e($_POST['site_name'] ?? '') ?>" placeholder="Mi sitio" required></label><label>Título principal<input name="site_title" maxlength="120" value="<?= installer_e($_POST['site_title'] ?? '') ?>" placeholder="Título de la portada" required></label></div></fieldset>
 <fieldset><legend>Correo de verificación</legend><p class="muted">Datos del buzón que enviará verificaciones y recuperaciones.</p><div class="settings-grid"><label>Servidor SMTP<input name="smtp_host" value="<?= installer_e($_POST['smtp_host'] ?? 'smtp.jrz.wtf') ?>" required></label><label>Puerto SSL<input name="smtp_port" inputmode="numeric" value="<?= installer_e($_POST['smtp_port'] ?? '465') ?>" required></label><label>Usuario SMTP<input type="email" name="smtp_username" value="<?= installer_e($_POST['smtp_username'] ?? 'no-reply@jrz.wtf') ?>" required></label><label>Contraseña del correo<input type="password" name="smtp_password" required></label></div></fieldset>
 <button class="button installer-submit" type="submit" <?= in_array(false, $requirements, true) ? 'disabled' : '' ?>>Instalar sitio</button></form>
