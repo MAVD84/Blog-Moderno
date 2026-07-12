@@ -82,6 +82,8 @@ Ejecuta `migrations/012_post_shares.sql` para mostrar un contador de veces compa
 
 La zona horaria se selecciona desde Configuración y se aplica tanto a PHP como a la sesión MySQL. El valor inicial es `America/Matamoros`.
 
+Ejecuta `migrations/013_staff_reactions.sql` para que administradores y editores puedan reaccionar con su cuenta del panel, sin crear una cuenta adicional de lector.
+
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
 
 ## Despliegue
