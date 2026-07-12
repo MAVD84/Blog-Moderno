@@ -2,8 +2,8 @@
 require_once __DIR__ . '/functions.php';
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $slug = trim((string)($_GET['slug'] ?? ''));
-if ($slug !== '') { $stmt = db()->prepare('SELECT * FROM posts WHERE slug = ?'); $stmt->execute([$slug]); }
-else { $stmt = db()->prepare('SELECT * FROM posts WHERE id = ?'); $stmt->execute([$id]); }
+if ($slug !== '') { $stmt = db()->prepare('SELECT p.*,m.avatar author_avatar FROM posts p LEFT JOIN members m ON m.id=p.member_author_id WHERE p.slug=?'); $stmt->execute([$slug]); }
+else { $stmt = db()->prepare('SELECT p.*,m.avatar author_avatar FROM posts p LEFT JOIN members m ON m.id=p.member_author_id WHERE p.id=?'); $stmt->execute([$id]); }
 $post = $stmt->fetch();
 if (!$post) { http_response_code(404); exit('Artículo no encontrado.'); }
 if (($post['status'] ?? 'published') !== 'published' && !is_logged_in() && !can_member_edit_post($post)) { http_response_code(404); exit('Artículo no encontrado.'); }
@@ -43,7 +43,7 @@ $shareVersion = (string) (@filemtime(__DIR__ . '/assets/share.js') ?: '1');
 $commentsVersion = (string) (@filemtime(__DIR__ . '/assets/comments.js') ?: '1');
 ?>
 <article class="article"><?php if ($post['imagen']): ?><div class="cover-wrap"><img class="cover" src="uploads/<?= e($post['imagen']) ?>" alt="<?= e($post['titulo']) ?>" loading="eager" decoding="async"<?= $imageSize ? ' width="' . (int)$imageSize[0] . '" height="' . (int)$imageSize[1] . '"' : '' ?> style="max-width:100%;height:auto;max-height:72vh;object-fit:contain"></div><?php endif; ?>
-<div class="article-body"><h1><?= e($post['titulo']) ?></h1><p class="muted">Publicado el <?= e(format_date($post['fecha'], true)) ?> · Por <?= e($post['author_name'] ?: 'Administrador') ?></p>
+<div class="article-body"><h1><?= e($post['titulo']) ?></h1><div class="post-author"><?php if($post['author_avatar']):?><img class="avatar" src="/uploads/<?=e($post['author_avatar'])?>" alt="Avatar de <?=e($post['author_name'])?>"><?php endif;?><p class="muted">Publicado el <?= e(format_date($post['fecha'], true)) ?> · Por <?= e($post['author_name'] ?: 'Administrador') ?></p></div>
 <div class="post-stats"><span>👁 <?= $stats['views'] ?> vistas</span><form method="post" action="/reaction.php"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="post_id" value="<?= $id ?>"><button name="reaction" value="1" class="reaction <?= $stats['reaction']===1?'active':'' ?>">👍 <?= $stats['likes'] ?></button><button name="reaction" value="-1" class="reaction <?= $stats['reaction']===-1?'active':'' ?>">👎 <?= $stats['dislikes'] ?></button></form></div>
 <?php if (can_edit_post($post)): ?><div class="actions"><a class="button warn" href="edit.php?id=<?= (int)$id ?>">Editar</a><form method="post" action="delete.php" onsubmit="return confirm('¿Eliminar este artículo?')"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="id" value="<?= (int)$id ?>"><button class="button danger-bg">Eliminar</button></form></div><?php endif; ?>
 <div class="content rich-content"><?= sanitize_html($post['contenido']) ?></div>

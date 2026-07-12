@@ -14,16 +14,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'og_image' => $settings['og_image'],
         'favicon_image' => $settings['favicon_image'],
         'logo_image' => $settings['logo_image'],
+        'theme_color' => strtolower(trim($_POST['theme_color'] ?? '#5546e8')),
     ];
     if (isset($_POST['reset_favicon'])) { $values['favicon_image'] = '/assets/favicon.png'; }
     if (isset($_POST['remove_logo'])) { $values['logo_image'] = ''; }
     $limits = ['site_name' => 50, 'site_title' => 120, 'site_tagline' => 160, 'site_description' => 300, 'footer_text' => 160];
     foreach ($limits as $key => $limit) {
-        if ($values[$key] === '' || mb_strlen($values[$key]) > $limit) {
+        if ((in_array($key,['site_name','site_title','footer_text'],true) && $values[$key] === '') || mb_strlen($values[$key]) > $limit) {
             flash('Revisa los campos de configuración y sus longitudes.', 'error');
             redirect('settings.php');
         }
     }
+    if (!preg_match('/^#[0-9a-f]{6}$/', $values['theme_color'])) { flash('Selecciona un color principal válido.', 'error'); redirect('settings.php'); }
 
     $newFiles = [];
     try {
@@ -57,6 +59,7 @@ render_header('Configuración', ['robots' => 'noindex,nofollow']);
         <label>Subtítulo<input name="site_tagline" maxlength="160" value="<?= e($settings['site_tagline']) ?>" required></label>
         <label>Descripción SEO<textarea name="site_description" maxlength="300" rows="4" required><?= e($settings['site_description']) ?></textarea><small>Se utiliza en Google y al compartir la página principal.</small></label>
         <label>Texto del footer<input name="footer_text" maxlength="160" value="<?= e($settings['footer_text']) ?>" required></label>
+        <label>Color principal<div class="color-control"><input type="color" name="theme_color" value="<?= e($settings['theme_color']) ?>" aria-label="Seleccionar color principal"><output><?= e(strtoupper($settings['theme_color'])) ?></output><span class="color-swatch" style="background:<?= e($settings['theme_color']) ?>"></span></div><small>Cambia globalmente botones, enlaces, menús, bordes activos y elementos destacados.</small></label>
         <label>Imagen social predeterminada<input type="file" name="og_image" accept="image/png,image/jpeg,image/webp"><small>Recomendado: 1200 × 630 px. Los posts con portada usan su propia imagen.</small></label>
         <img class="settings-og-preview" src="<?= e($settings['og_image']) ?>" alt="Imagen social actual">
         <div class="settings-grid settings-brand-assets">
@@ -66,4 +69,5 @@ render_header('Configuración', ['robots' => 'noindex,nofollow']);
         <div class="settings-actions"><button class="button" type="submit">Guardar configuración</button></div>
     </form>
 </div>
+<script src="/assets/theme.js?v=<?= e((string)(@filemtime(__DIR__.'/assets/theme.js')?:'1')) ?>" defer></script>
 <?php render_footer(); ?>

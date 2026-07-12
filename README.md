@@ -70,6 +70,8 @@ Ejecuta `migrations/009_community_posts.sql` para habilitar la comunidad. Los le
 
 Las instalaciones nuevas comienzan sin logo, favicon, imagen social, descripción, eslogan ni contenido SEO de ejemplo. Configura la identidad y metadata después desde el panel administrativo.
 
+El color principal global se puede cambiar desde Configuración. El selector actualiza botones, enlaces, estados activos y detalles del tema sin modificar CSS manualmente.
+
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
 
 ## Despliegue
