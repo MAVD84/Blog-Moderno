@@ -26,5 +26,5 @@ document.addEventListener('DOMContentLoaded', () => {
       toggle.focus();
     }
   });
-  window.matchMedia('(min-width: 761px)').addEventListener('change', closeMenu);
+  window.matchMedia('(min-width: 1101px)').addEventListener('change', closeMenu);
 });
