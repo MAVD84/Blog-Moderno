@@ -61,6 +61,8 @@ footer { padding: 28px 16px; text-align: center; color: #98a2b3; background: var
 
 .cover-wrap { width: 100%; display: flex; align-items: center; justify-content: center; background: #101828; overflow: hidden; }
 .cover { display: block; width: auto; max-width: 100%; height: auto; max-height: 72vh; object-fit: contain; }
+.image-credit { margin:0; padding:7px 16px; color:var(--muted); background:#fcfcfd; border-bottom:1px solid var(--line); font-size:.72rem; text-align:right; }
+.image-credit a { color:var(--primary); text-decoration:underline; text-underline-offset:2px; }
 .article h1 { margin: 0; font-size: clamp(2rem,6vw,2.8rem); line-height: 1.15; letter-spacing: -.035em; overflow-wrap: anywhere; }
 .article .muted { margin: 12px 0 0; }
 .post-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }

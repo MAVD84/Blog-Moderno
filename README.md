@@ -84,6 +84,8 @@ La zona horaria se selecciona desde Configuración y se aplica tanto a PHP como 
 
 Ejecuta `migrations/013_staff_reactions.sql` para que administradores y editores puedan reaccionar con su cuenta del panel, sin crear una cuenta adicional de lector.
 
+Ejecuta `migrations/014_image_credits.sql` para agregar autor y enlace de atribución opcionales debajo de las imágenes de portada.
+
 Configura en `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL` y `SMTP_FROM_NAME`. Para HostVerge: servidor `smtp.jrz.wtf`, puerto `465`, cifrado `ssl` y usuario `no-reply@jrz.wtf`. Nunca subas la contraseña del buzón a Git.
 
 ## Despliegue

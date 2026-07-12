@@ -63,6 +63,12 @@ function require_member(bool $verified = true): array
     return $member;
 }
 function redirect(string $url): never { header("Location: {$url}"); exit; }
+function optional_http_url(string $value): ?string
+{
+    $value=trim($value);if($value==='')return null;
+    if(mb_strlen($value)>500||!filter_var($value,FILTER_VALIDATE_URL)||!preg_match('#^https?://#i',$value)){throw new RuntimeException('El enlace del crédito debe ser una URL HTTP o HTTPS válida.');}
+    return $value;
+}
 function post_url(array $post): string { return '/' . rawurlencode($post['slug']); }
 
 function site_base_url(): string

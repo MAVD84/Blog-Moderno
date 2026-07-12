@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS posts (
     slug VARCHAR(200) NOT NULL UNIQUE,
     contenido MEDIUMTEXT NOT NULL,
     imagen VARCHAR(255) NULL,
+    image_credit VARCHAR(200) NULL,
+    image_credit_url VARCHAR(500) NULL,
     author_id BIGINT UNSIGNED NULL,
     member_author_id BIGINT UNSIGNED NULL,
     author_name VARCHAR(100) NOT NULL DEFAULT 'Administrador',
